@@ -1,0 +1,1461 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
+<title>个人工作台</title>
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+html{-webkit-text-size-adjust:100%}
+body{
+  font-family:"PingFang SC","Microsoft YaHei",system-ui,sans-serif;
+  color:#2c4a53;min-height:100vh;
+  background:linear-gradient(165deg,#e7faf4 0%,#ddf2fb 38%,#eaf1ff 72%,#e6fbf3 100%);
+  background-attachment:fixed;
+}
+::selection{background:rgba(125,232,195,.4)}
+button{font-family:inherit;cursor:pointer}
+input,textarea{font-family:inherit;color:#2c4a53}
+
+/* ---------- 背景：冰汽水气泡 + 荧光星点 ---------- */
+.bg{position:fixed;inset:0;z-index:0;overflow:hidden;pointer-events:none}
+.bub{position:absolute;bottom:-80px;border-radius:50%;
+  background:radial-gradient(circle at 32% 28%,rgba(255,255,255,.95),rgba(168,224,240,.28) 60%,rgba(168,224,240,.08));
+  border:1px solid rgba(255,255,255,.5);
+  animation:rise linear infinite}
+@keyframes rise{
+  0%{transform:translateY(0) translateX(0);opacity:0}
+  8%{opacity:.9}
+  50%{transform:translateY(-55vh) translateX(14px)}
+  90%{opacity:.55}
+  100%{transform:translateY(-115vh) translateX(-10px);opacity:0}
+}
+.sp{position:absolute;border-radius:50%;background:#a9f2d6;
+  box-shadow:0 0 8px 2px rgba(125,232,195,.85),0 0 16px 4px rgba(125,232,195,.35);
+  animation:tw 3.4s ease-in-out infinite}
+.sp.b{background:#bfe6fb;box-shadow:0 0 8px 2px rgba(143,211,244,.85),0 0 16px 4px rgba(143,211,244,.35)}
+@keyframes tw{0%,100%{opacity:.15;transform:scale(.7)}50%{opacity:1;transform:scale(1.15)}}
+
+/* ---------- 通用 ---------- */
+.wrap{position:relative;z-index:1;max-width:1080px;margin:0 auto;padding:0 16px 132px}
+.glass{
+  background:rgba(255,255,255,.5);
+  backdrop-filter:blur(16px) saturate(1.3);-webkit-backdrop-filter:blur(16px) saturate(1.3);
+  border:1px solid rgba(255,255,255,.8);
+  border-radius:20px;
+  box-shadow:0 8px 28px rgba(120,175,195,.16),inset 0 1px 0 rgba(255,255,255,.9);
+}
+.card{padding:20px;margin-bottom:18px}
+h3{font-size:16px;margin-bottom:14px;display:flex;align-items:center;gap:8px;flex-wrap:wrap}
+.pt{font-size:22px;margin:22px 0 16px;letter-spacing:1px;line-height:1.45;
+  display:flex;align-items:baseline;flex-wrap:wrap;column-gap:9px;row-gap:4px}
+.pt span{font-size:13px;font-weight:400;color:#6f93a0;letter-spacing:2px;white-space:nowrap}
+.pt2{font-size:18px;margin:26px 0 14px}
+.empty{color:#8fb2bd;font-size:13px;padding:8px 2px}
+.hint{color:#7d9fa9;font-size:12px;margin-top:10px;line-height:1.8}
+.hint b{color:#3fae8c}
+.num-lg{font-size:34px;line-height:1.25;font-weight:800;color:#0e7a5f;letter-spacing:.5px;
+  font-variant-numeric:tabular-nums}
+.tag{font-size:12px;font-weight:400;color:#4a8fae;background:rgba(143,211,244,.22);padding:3px 10px;border-radius:20px}
+h3 .tb{
+  margin-left:auto;border:none;cursor:pointer;display:inline-flex;align-items:center;gap:4px;
+  background:linear-gradient(120deg,rgba(125,232,195,.75),rgba(120,214,235,.7));
+  color:#0d5c49;font-weight:600;font-size:12px;padding:6px 13px;border-radius:14px;white-space:nowrap;
+  box-shadow:0 4px 14px rgba(125,232,195,.35);transition:.2s;
+}
+h3 .tb:hover{transform:translateY(-1px);box-shadow:0 6px 18px rgba(125,232,195,.55)}
+
+/* ---------- 页面切换 ---------- */
+main section{display:none}
+main section.active{display:block;animation:fadeIn .35s ease}
+@keyframes fadeIn{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:none}}
+
+/* ---------- 底部导航栏 ---------- */
+.tabbar{
+  position:fixed;left:50%;bottom:14px;transform:translateX(-50%);
+  z-index:60;display:flex;gap:2px;padding:7px;border-radius:26px;max-width:calc(100vw - 24px);
+  background:rgba(255,255,255,.68);
+  backdrop-filter:blur(18px) saturate(1.4);-webkit-backdrop-filter:blur(18px) saturate(1.4);
+  border:1px solid rgba(255,255,255,.9);
+  box-shadow:0 10px 34px rgba(120,175,195,.28),inset 0 1px 0 rgba(255,255,255,.9);
+}
+.tabbar button{
+  border:none;background:transparent;padding:9px 18px;border-radius:19px;
+  font-size:13.5px;color:#4f7580;white-space:nowrap;display:flex;align-items:center;gap:6px;transition:.25s;
+}
+.tabbar button i{font-style:normal;font-size:16px}
+.tabbar button:hover{background:rgba(255,255,255,.75)}
+.tabbar button.on{
+  background:linear-gradient(120deg,rgba(125,232,195,.6),rgba(143,211,244,.55));
+  color:#0e5d4a;font-weight:600;
+  box-shadow:0 4px 14px rgba(125,232,195,.35),inset 0 1px 0 rgba(255,255,255,.85);
+}
+@media (max-width:520px){
+  .tabbar{left:12px;right:12px;transform:none;justify-content:space-around;border-radius:22px;padding:6px}
+  .tabbar button{flex-direction:column;gap:1px;padding:6px 4px;font-size:10px;border-radius:16px;flex:1}
+  .tabbar button i{font-size:18px}
+}
+
+/* ---------- 云同步 ---------- */
+.syncfab{position:fixed;right:16px;bottom:86px;z-index:55;width:46px;height:46px;border-radius:50%;
+  border:none;cursor:pointer;font-size:19px;color:#0d6b53;display:flex;align-items:center;justify-content:center;
+  background:linear-gradient(135deg,rgba(125,232,195,.8),rgba(143,211,244,.75));
+  box-shadow:0 8px 24px rgba(125,232,195,.5),inset 0 1px 0 rgba(255,255,255,.9);transition:.2s}
+.syncfab:hover{transform:translateY(-2px) scale(1.06)}
+.syncfab.off{color:#8aa7b0;background:rgba(255,255,255,.72);
+  box-shadow:0 6px 18px rgba(120,175,195,.25),inset 0 1px 0 rgba(255,255,255,.9)}
+@media (max-width:520px){.syncfab{bottom:76px;right:12px;width:42px;height:42px;font-size:17px}}
+.syn-note{font-size:12.5px;color:#5f8aa0;line-height:1.85;margin:2px 0 6px}
+.syn-lbl{font-size:12px;color:#4f7580;margin:11px 0 4px}
+.syn-lbl small{color:#9db6bd;font-weight:400}
+.syn-in{width:100%;padding:10px 12px;border-radius:12px;border:1px solid rgba(255,255,255,.95);
+  background:rgba(255,255,255,.65);outline:none;font-size:13.5px;box-sizing:border-box;color:#2c4f58}
+.syn-in:focus{border-color:#7de8c3;box-shadow:0 0 0 3px rgba(125,232,195,.25)}
+.syn-st{font-size:12.5px;line-height:1.7;color:#1f8f73;margin-top:13px;padding:9px 12px;border-radius:12px;
+  background:rgba(125,232,195,.15);white-space:pre-line}
+.syn-st.err{color:#c0564f;background:rgba(255,183,178,.16)}
+.syn-help{font-size:12.5px;color:#5f7f8b;line-height:2;margin-top:14px;border-top:1px dashed rgba(125,232,195,.55);padding-top:11px}
+.syn-help b{color:#2f9d7d}
+.syn-help code{font-size:11px;background:rgba(255,255,255,.75);padding:1px 6px;border-radius:6px;color:#2c5a68}
+.syn-lnk{display:block;text-align:center;font-size:12.5px;color:#2f9d7d;margin-top:10px;text-decoration:underline;cursor:pointer}
+
+/* ---------- 表单 ---------- */
+.frm{display:flex;gap:8px;flex-wrap:wrap;margin-top:14px}
+.frm.inline{margin:0 0 14px}
+.frm input,.frm textarea{
+  flex:1;min-width:130px;padding:9px 13px;border-radius:13px;
+  border:1px solid rgba(255,255,255,.9);outline:none;font-size:13.5px;
+  background:rgba(255,255,255,.55);transition:.25s;
+}
+.frm input:focus{border-color:#7de8c3;box-shadow:0 0 0 3px rgba(125,232,195,.25);background:rgba(255,255,255,.8)}
+.frm.col{flex-direction:column;align-items:stretch}
+.frm.col input[type=text],.frm.col input[type=number]{width:100%}
+.frm.col .btn{width:100%}
+.daterow{display:flex;gap:8px;align-items:center;width:100%}
+.dt{flex:1;display:flex;align-items:center;gap:6px;font-size:12px;color:#6f93a0;min-width:0;
+  border:1px solid rgba(255,255,255,.9);border-radius:13px;padding:0 4px 0 10px;background:rgba(255,255,255,.55)}
+.dt input{border:none;background:transparent;padding:8px 2px;min-width:0;flex:1;outline:none}
+.ybtns{display:flex;gap:6px;flex:none}
+.yy{border:1px solid rgba(255,255,255,.95);background:rgba(255,255,255,.6);border-radius:10px;
+  font-size:11px;color:#3a6672;padding:8px 10px;white-space:nowrap;cursor:pointer;transition:.2s}
+.yy:hover{background:rgba(255,255,255,.95)}
+.btn{
+  border:1px solid rgba(255,255,255,.9);background:rgba(255,255,255,.6);
+  padding:9px 18px;border-radius:13px;font-size:13.5px;color:#3a6672;transition:.25s;white-space:nowrap;
+}
+.btn:hover{background:rgba(255,255,255,.9);transform:translateY(-1px)}
+.btn.mint{
+  background:linear-gradient(120deg,rgba(125,232,195,.75),rgba(120,214,235,.7));
+  color:#0d5c49;font-weight:600;border:none;
+  box-shadow:0 4px 14px rgba(125,232,195,.4),inset 0 1px 0 rgba(255,255,255,.6);
+}
+.btn.mint:hover{box-shadow:0 6px 20px rgba(125,232,195,.55)}
+.btn.ghost{background:transparent}
+.mini{
+  border:none;background:rgba(255,255,255,.65);border-radius:9px;
+  font-size:11.5px;padding:4px 10px;color:#54808c;transition:.2s;
+}
+.mini:hover{background:#fff;transform:translateY(-1px)}
+.mini.mint{background:rgba(125,232,195,.3);color:#0d6b53;font-weight:600}
+.mini.del:hover{background:rgba(255,150,150,.25);color:#c04f4f}
+
+/* ---------- 经济基础 ---------- */
+.grid2{display:grid;grid-template-columns:1fr 1fr;gap:0 18px;align-items:start}
+@media (max-width:780px){.grid2{grid-template-columns:1fr}}
+.goal{position:relative;padding:14px 15px;border-radius:15px;background:rgba(255,255,255,.5);
+  border:1px solid rgba(255,255,255,.85);margin-bottom:10px}
+.goal .gamt{display:block;padding-right:46px;word-break:break-word;margin-top:2px;cursor:pointer;border-radius:8px;padding:2px 4px;margin:-2px -4px -2px 0;transition:background .15s;width:fit-content}
+.goal .gamt:hover{background:rgba(125,232,195,.14)}
+.prog-num{margin:-4px 0 12px}
+.goal-date{font-size:12px;color:#5f8aa0;margin-top:4px;letter-spacing:.3px;cursor:pointer;border-radius:8px;padding:2px 6px;margin:-2px -6px;width:fit-content;transition:background .15s}
+.goal-date:hover{background:rgba(125,232,195,.14)}
+.goal-date-edit{font-size:12px;color:#5f8aa0;margin-top:4px;letter-spacing:.3px;display:flex;align-items:center;gap:6px;flex-wrap:wrap}
+.goal-date-edit input[type=date]{border:1px solid #7de8c3;border-radius:10px;padding:6px 8px;background:rgba(255,255,255,.9);outline:none;color:#2c4a53;font-family:inherit;font-size:12px}
+.goal-meta{display:flex;gap:10px;align-items:center;margin-top:8px;font-size:12px;color:#6f93a0;flex-wrap:wrap}
+.goal-pct{font-weight:600;color:#0e7a5f;background:rgba(125,232,195,.2);padding:2px 10px;border-radius:11px}
+.goal-note{color:#3f9d84;font-style:italic}
+.goal .mini{position:absolute;top:10px;right:10px;opacity:0;transition:.2s}
+.goal:hover .mini{opacity:1}
+@media (hover:none){.goal .mini{opacity:1}}
+.bar{height:9px;border-radius:9px;background:rgba(255,255,255,.7);margin-top:9px;overflow:hidden;
+  border:1px solid rgba(255,255,255,.9)}
+.bar i{display:block;height:100%;border-radius:9px;transition:width .6s ease;
+  background:linear-gradient(90deg,#7de8c3,#8fd3f4);
+  box-shadow:0 0 10px rgba(125,232,195,.8)}
+.list .row{display:flex;align-items:center;gap:9px;padding:9px 11px;border-radius:13px;
+  background:rgba(255,255,255,.45);border:1px solid rgba(255,255,255,.8);margin-bottom:8px;font-size:13px;flex-wrap:wrap}
+.list .row b{color:#1f8f73}
+.list .row.paid{opacity:.55}
+.list .row.paid b{text-decoration:line-through}
+.rn{font-style:normal;color:#6f93a0;font-size:12px}
+.due{font-size:11.5px;color:#4a8fae;background:rgba(143,211,244,.2);padding:2px 8px;border-radius:10px;margin-left:auto}
+.list .row .mini:last-child{margin-left:auto}
+.list .row .mini.ok{margin-left:auto}
+.list .row .mini.ok:not(:last-child){margin-left:auto}
+.list .row .mini.del{margin-left:0}
+
+/* ---------- 自由人生 ---------- */
+.pagehead{display:flex;align-items:flex-start;justify-content:space-between;gap:8px 12px;flex-wrap:wrap;margin:22px 0 16px}
+.pagehead h2{margin:0;flex:1 1 auto;min-width:0}
+.pagehead .archpill{margin-top:2px}
+.archpill{
+  display:inline-flex;align-items:center;gap:7px;border:none;cursor:pointer;flex:none;white-space:nowrap;
+  padding:9px 16px;border-radius:20px;font-size:13.5px;color:#0d6b53;font-weight:700;
+  background:linear-gradient(120deg,rgba(125,232,195,.62),rgba(143,211,244,.55));
+  box-shadow:0 5px 16px rgba(125,232,195,.4),inset 0 1px 0 rgba(255,255,255,.85);transition:.2s;
+}
+.archpill:hover{transform:translateY(-1px);box-shadow:0 8px 22px rgba(125,232,195,.5)}
+.archcnt{min-width:19px;text-align:center;font-size:11.5px;padding:1px 7px;border-radius:11px;
+  background:rgba(255,255,255,.75);color:#0d6b53;box-sizing:border-box}
+.cats .cat{padding:18px 18px 16px}
+.cat-head{display:flex;align-items:center;gap:9px;flex-wrap:wrap;margin-bottom:12px}
+.cat-head h3{margin:0;font-size:16.5px}
+.cnt{font-size:11.5px;color:#7d9fa9}
+.cat-head .mini{margin-left:auto}
+.addwish{display:flex;gap:8px;margin-bottom:12px}
+.addwish input{flex:1;padding:9px 13px;border-radius:13px;border:1px solid rgba(255,255,255,.9);
+  background:rgba(255,255,255,.55);outline:none;font-size:13.5px;min-width:0}
+.addwish input:focus{border-color:#7de8c3;box-shadow:0 0 0 3px rgba(125,232,195,.25)}
+.wish{
+  display:flex;align-items:flex-start;gap:10px;padding:11px 13px;margin-bottom:9px;border-radius:15px;
+  background:rgba(255,255,255,.55);border:1px solid rgba(255,255,255,.9);
+  transition:transform .2s,box-shadow .2s;user-select:none;-webkit-user-select:none;touch-action:pan-y;
+}
+.wish:hover{transform:translateY(-2px);box-shadow:0 8px 18px rgba(120,190,200,.18)}
+.wish-card{flex:1;min-width:0;display:flex;flex-direction:column;gap:4px}
+.wish-head{display:flex;align-items:center;gap:10px;width:100%}
+.wish-head .wtxt{flex:1;min-width:0}
+/* 子步骤列表（直接内联在卡片下方，复用上次发的待办样式） */
+.wish-sub{padding:6px 0 2px 36px;display:flex;flex-direction:column;gap:5px}
+.ws-row{
+  display:flex;align-items:center;gap:10px;padding:7px 11px;border-radius:11px;
+  background:rgba(255,255,255,.5);border:1px solid rgba(255,255,255,.75);
+  transition:background .2s,border-color .2s;
+}
+.ws-row.done{background:rgba(125,232,195,.16);border-color:rgba(125,232,195,.4)}
+.ws-row.done .ws-txt{color:#8fb2bd;text-decoration:line-through}
+.ws-ck{
+  flex:none;width:20px;height:20px;border-radius:7px;
+  border:1px solid rgba(125,232,195,.7);background:rgba(255,255,255,.6);
+  display:flex;align-items:center;justify-content:center;font-size:11.5px;color:#0d6b53;cursor:pointer;transition:.2s;padding:0;
+}
+.ws-ck.on{background:linear-gradient(135deg,#7de8c3,#8fd3f4);border:none;color:#fff}
+.ws-txt{flex:1;font-size:13px;min-width:0;word-break:break-all;cursor:text;border-radius:7px;padding:1px 4px;margin:-1px -4px;transition:background .15s}
+.ws-txt:hover{background:rgba(125,232,195,.14)}
+.ws-del{
+  flex:none;border:none;background:transparent;color:#9fb8c0;font-size:13px;cursor:pointer;padding:2px 6px;line-height:1;
+}
+.ws-del:hover{color:#d96a5d}
+.ws-empty{color:#8aa5ae;font-size:12px;padding:2px 0}
+.ws-new{display:flex;align-items:center;gap:10px;padding:7px 11px;border-radius:11px;border:1px dashed rgba(125,232,195,.6);background:rgba(255,255,255,.35)}
+.ws-new input{flex:1;border:none;outline:none;background:transparent;font-size:13px;color:#23424c;padding:0;font-family:inherit;min-width:0}
+.ord{flex:none;width:24px;height:24px;border-radius:50%;display:flex;align-items:center;justify-content:center;
+  font-size:11.5px;color:#2c8c72;background:rgba(125,232,195,.28);font-weight:700}
+.wtxt{font-size:14px;flex:1;min-width:0;word-break:break-all}
+.wish-head .wtxt{cursor:text;border-radius:8px;padding:6px 4px;margin:-6px -4px;transition:background .15s;flex:1;min-width:0;display:block}
+.wish-head .wtxt:hover{background:rgba(125,232,195,.14)}
+.wedit{flex:1;min-width:0;font-size:14px;padding:4px 9px;border-radius:10px;border:1px solid #7de8c3;
+  background:rgba(255,255,255,.9);outline:none;color:#23424c;box-shadow:0 0 0 3px rgba(125,232,195,.2);font-family:inherit}
+.wbtns{display:flex;gap:6px;flex:none}
+.wish.done{background:rgba(125,232,195,.14);border-color:rgba(125,232,195,.4);flex-wrap:wrap;row-gap:4px}
+.wish.done .wtxt{color:#2c8c72;font-weight:600}
+.wish.done em{font-size:11.5px;color:#5aa58d;font-style:normal}
+.armeta{flex:1 1 100%;display:flex;align-items:center;gap:14px;font-size:11.5px;color:#5aa58d;flex-wrap:wrap}
+.armeta .asrc{color:#2c8c72;background:rgba(125,232,195,.22);padding:1px 9px;border-radius:9px}
+.armeta .wbtns{margin-left:auto}
+.armeta .wbtns .mini{padding:3px 9px}
+.lcnt{flex:none;font-size:11px;color:#3f9d84;background:rgba(125,232,195,.22);padding:2px 8px;border-radius:10px;white-space:nowrap}
+.ckbtn{width:24px;height:24px;border-radius:8px;border:1px solid rgba(125,232,195,.7);background:rgba(255,255,255,.6);color:#0d6b53;font-size:13px;flex:none;cursor:pointer;transition:.2s}
+.ckbtn.on{background:linear-gradient(135deg,#7de8c3,#8fd3f4);border:none;color:#fff;box-shadow:0 0 8px rgba(125,232,195,.7)}
+/* 愿望卡片左侧大对钩（点击即归档整个愿望） */
+.wck{
+  flex:none;width:26px;height:26px;border-radius:8px;
+  border:1.6px solid rgba(125,232,195,.55);
+  background:rgba(255,255,255,.45);
+  cursor:pointer;position:relative;transition:.2s;
+}
+.wck:hover{border-color:rgba(125,232,195,.9);background:rgba(255,255,255,.7)}
+.wck::after{
+  content:"";position:absolute;left:7px;top:3px;width:7px;height:13px;
+  border-right:2px solid #fff;border-bottom:2px solid #fff;
+  transform:rotate(40deg) scale(.4);opacity:0;transition:.2s;
+}
+.wck.on{background:linear-gradient(135deg,#7de8c3,#8fd3f4);border-color:transparent;box-shadow:0 0 8px rgba(125,232,195,.7)}
+.wck.on::after{opacity:1;transform:rotate(40deg) scale(1)}
+/* 待办清单弹窗风格 */
+.modal .li-title{color:#f0a93c !important;font-weight:800;font-size:22px;margin:0 0 12px;letter-spacing:.5px}
+.li-list{display:flex;flex-direction:column;gap:9px;max-height:60vh;overflow-y:auto;padding-right:4px}
+.li-row{
+  display:flex;align-items:center;gap:11px;padding:11px 13px;border-radius:14px;
+  background:rgba(255,255,255,.55);border:1px solid rgba(255,255,255,.9);
+  transition:background .2s;
+}
+.li-row:hover{background:rgba(255,255,255,.72)}
+.li-ck{
+  flex:none;width:22px;height:22px;border-radius:7px;
+  border:1.6px solid rgba(120,180,180,.5);background:rgba(255,255,255,.55);
+  cursor:pointer;position:relative;transition:.2s;
+}
+.li-ck:hover{border-color:rgba(125,232,195,.9)}
+.li-ck.on{
+  background:linear-gradient(135deg,#7de8c3,#8fd3f4);border-color:transparent;box-shadow:0 0 6px rgba(125,232,195,.6);
+}
+.li-ck.on::after{
+  content:"";position:absolute;left:6px;top:2px;width:6px;height:11px;
+  border-right:2px solid #fff;border-bottom:2px solid #fff;transform:rotate(40deg);
+}
+.li-txt{flex:1;min-width:0;font-size:14px;color:#3a5760;word-break:break-all;transition:.2s}
+.li-del{
+  flex:none;width:24px;height:24px;border-radius:50%;border:none;
+  background:transparent;color:#a8c0c8;font-size:14px;cursor:pointer;opacity:.4;transition:.2s;
+}
+.li-del:hover{opacity:1;color:#d76b7e;background:rgba(255,200,210,.25)}
+.li-done .li-txt{text-decoration:line-through;color:#9ab1bb}
+.pname{cursor:pointer;border-bottom:1px dashed transparent}
+.pname:hover{color:#0d6b53;border-bottom-color:rgba(125,232,195,.8)}
+.yr h4{font-size:13px;color:#3f9d84;margin:10px 0 8px;display:flex;align-items:center;gap:6px}
+.yr h4::after{content:"";flex:1;height:1px;background:linear-gradient(90deg,rgba(125,232,195,.5),transparent)}
+.ctxmenu{
+  position:fixed;z-index:200;display:flex;flex-direction:column;min-width:150px;padding:6px;
+  background:rgba(255,255,255,.85);backdrop-filter:blur(20px);border-radius:16px;
+  border:1px solid rgba(255,255,255,.95);box-shadow:0 12px 34px rgba(90,150,170,.28);
+  animation:pop .15s ease;
+}
+@keyframes pop{from{opacity:0;transform:scale(.92)}to{opacity:1;transform:scale(1)}}
+.ctxmenu button{border:none;background:transparent;text-align:left;padding:9px 13px;border-radius:11px;
+  font-size:13.5px;color:#37596a;transition:.15s}
+.ctxmenu button:hover{background:rgba(125,232,195,.22)}
+.ctxmenu button.danger:hover{background:rgba(255,150,150,.2);color:#c04f4f}
+
+/* ---------- 一寸光阴 ---------- */
+.tmnav{display:flex;align-items:center;gap:10px;margin:4px 0 14px}
+.tmnav b{font-size:16px;color:#33697a;letter-spacing:1px;min-width:110px;text-align:center}
+.ckwrap{overflow-x:auto;padding-bottom:6px;-webkit-overflow-scrolling:touch}
+.ck-table{border-collapse:separate;border-spacing:3px;min-width:max-content}
+.ck-table th,.ck-table td{height:30px;min-width:30px;border-radius:9px;font-weight:400}
+.ck-table thead th{font-size:10.5px;color:#6f93a0;background:rgba(255,255,255,.5);padding:0 2px}
+.ck-table thead th.we{color:#7db1c9}
+.ck-table thead th.tdy,.ck-table td.tdy{box-shadow:0 0 0 2px rgba(125,232,195,.75)}
+.pcol{
+  position:sticky;left:0;z-index:2;background:rgba(255,255,255,.88);backdrop-filter:blur(8px);
+  font-size:13px;color:#33697a;display:flex;align-items:center;gap:6px;padding:0 10px 0 6px;
+  border:1px solid rgba(255,255,255,.9);max-width:150px;white-space:nowrap;
+}
+.pcol i{width:9px;height:9px;border-radius:50%;flex:none;box-shadow:0 0 6px currentColor}
+.pcol span{overflow:hidden;text-overflow:ellipsis}
+.pcol .mini{padding:2px 6px;font-size:10px;opacity:.55;transition:.2s}
+.pcol:hover .mini{opacity:1}
+@media (hover:none){.pcol .mini{opacity:1}}
+td.ck{background:rgba(255,255,255,.4);cursor:pointer;position:relative;transition:.18s}
+td.ck:hover{background:rgba(255,255,255,.85)}
+td.ck.on{
+  background:linear-gradient(135deg,#7de8c3,#8fd3f4);
+  box-shadow:0 0 9px rgba(125,232,195,.75),inset 0 1px 0 rgba(255,255,255,.7);
+}
+td.ck.on::after{content:"";position:absolute;inset:0;margin:auto;width:7px;height:7px;border-radius:50%;
+  background:rgba(255,255,255,.95);box-shadow:0 1px 3px rgba(46,120,100,.4)}
+td.ck.nt::before{content:"";position:absolute;top:2px;right:2px;width:5px;height:5px;border-radius:50%;
+  background:#ffc857;box-shadow:0 0 5px rgba(255,200,87,.9)}
+
+/* ---------- 岁月史书 ---------- */
+.cal{display:grid;grid-template-columns:repeat(7,1fr);gap:7px}
+.cw{text-align:center;font-size:12px;color:#7d9fa9;padding:3px 0}
+.cd{
+  min-height:66px;border-radius:14px;padding:7px 8px;background:rgba(255,255,255,.4);
+  border:1px solid rgba(255,255,255,.8);cursor:pointer;transition:.2s;position:relative;
+}
+.cd:hover{background:rgba(255,255,255,.85);transform:translateY(-2px)}
+.cd.blank{background:transparent;border:none;pointer-events:none}
+.cd b{font-size:13px;color:#33697a}
+.cd.tdy{box-shadow:0 0 0 2px rgba(125,232,195,.8)}
+.cd.has{background:rgba(125,232,195,.16);border-color:rgba(125,232,195,.45)}
+.cd .dots{display:flex;gap:3px;margin-top:6px;flex-wrap:wrap;align-items:center}
+.cd .dots i{width:8px;height:8px;border-radius:50%;box-shadow:0 0 5px currentColor}
+.cd .dots em{font-size:9.5px;color:#5aa58d;font-style:normal}
+.cd .nio{position:absolute;top:5px;right:6px;font-size:10px}
+.gbgrid{display:grid;grid-template-columns:repeat(auto-fill,minmax(230px,1fr));gap:12px}
+.gb{display:flex;align-items:center;gap:10px;padding:15px 16px;border-radius:16px;flex-wrap:wrap}
+.gb i{width:10px;height:10px;border-radius:50%;flex:none;box-shadow:0 0 7px currentColor}
+.gb b{font-size:14px}
+.gb span{width:100%;font-size:12px;color:#6f93a0;margin-top:2px}
+.gb em{font-style:normal;color:#1f9d7d;font-size:16px;font-weight:700;padding:0 2px}
+
+/* ---------- 弹层 / 提示 ---------- */
+.ov{position:fixed;inset:0;z-index:300;background:rgba(200,230,240,.35);backdrop-filter:blur(6px);
+  display:flex;align-items:center;justify-content:center;padding:20px;animation:fin .2s ease}
+@keyframes fin{from{opacity:0}to{opacity:1}}
+.modal{max-width:430px;width:100%;padding:22px;max-height:80vh;overflow-y:auto;animation:pop .2s ease}
+.modal h3{margin-bottom:12px;font-size:16px;color:#2c6e5c}
+.modal textarea{width:100%;padding:11px 13px;border-radius:13px;border:1px solid rgba(255,255,255,.95);
+  background:rgba(255,255,255,.65);outline:none;font-size:13.5px;resize:vertical;min-height:70px}
+.modal textarea:focus{border-color:#7de8c3;box-shadow:0 0 0 3px rgba(125,232,195,.25)}
+.mrow{display:flex;gap:8px;margin-top:14px;flex-wrap:wrap}
+.mrow .btn{flex:1}
+.md-item{padding:10px 12px;border-radius:13px;background:rgba(255,255,255,.5);
+  border:1px solid rgba(255,255,255,.85);margin-bottom:8px;font-size:13px}
+.md-item b{color:#1f8f73}
+.md-item p{color:#6f93a0;font-size:12.5px;margin-top:4px;line-height:1.7;white-space:pre-wrap;word-break:break-word}
+.toast{position:fixed;left:50%;bottom:112px;transform:translateX(-50%) translateY(20px);z-index:400;
+  padding:10px 22px;border-radius:30px;font-size:13.5px;color:#0d5c49;opacity:0;transition:.3s;
+  background:rgba(255,255,255,.85);backdrop-filter:blur(14px);
+  border:1px solid rgba(125,232,195,.6);box-shadow:0 8px 24px rgba(125,232,195,.35)}
+.toast.show{opacity:1;transform:translateX(-50%) translateY(0)}
+</style>
+</head>
+<body>
+<div class="bg" id="bg"></div>
+
+<div class="wrap">
+<main>
+
+<!-- ========== 经济基础 ========== -->
+<section id="page-econ" class="active">
+  <h2 class="pt">经济基础 <span>· 一步一步，攒出底气</span></h2>
+  <div class="grid2">
+    <div class="card glass">
+      <h3>存款目标 <button class="tb" id="goalToggle" type="button">＋ 立个目标</button></h3>
+      <div id="goalList"></div>
+      <form id="goalForm" class="frm col" autocomplete="off" style="display:none">
+        <input id="gAmt" type="number" required>
+        <div class="daterow">
+          <label class="dt"><span>起</span><input id="gStart" type="date" required></label>
+          <span class="ybtns"><button type="button" class="yy" data-t="gStart" data-s="-1">◀ 前一年</button><button type="button" class="yy" data-t="gStart" data-s="1">后一年 ▶</button></span>
+        </div>
+        <div class="daterow">
+          <label class="dt"><span>止</span><input id="gEnd" type="date" required></label>
+          <span class="ybtns"><button type="button" class="yy" data-t="gEnd" data-s="-1">◀ 前一年</button><button type="button" class="yy" data-t="gEnd" data-s="1">后一年 ▶</button></span>
+        </div>
+        <input id="gNote" type="text" maxlength="60">
+        <button class="btn mint" type="submit">✓ 立下目标</button>
+      </form>
+    </div>
+    <div>
+      <div class="card glass">
+        <h3>目前进度 <button class="tb" id="progToggle" type="button">＋ 记一笔</button></h3>
+        <div class="num-lg prog-num" id="progTotal">¥0</div>
+        <div id="progList" class="list"></div>
+        <form id="progForm" class="frm" autocomplete="off" style="display:none">
+          <input id="pAmt" type="number" required style="flex:0 0 150px;min-width:120px">
+          <input id="pNote" type="text" maxlength="40">
+          <button class="btn mint" type="submit">✓ 记下这笔</button>
+        </form>
+      </div>
+      <div class="card glass">
+        <h3>备用资金</h3>
+        <input id="reserveInput" type="number" style="width:100%;padding:10px 14px;border-radius:13px;border:1px solid rgba(255,255,255,.9);background:rgba(255,255,255,.55);outline:none;font-size:14px">
+      </div>
+    </div>
+  </div>
+  <div class="card glass">
+    <h3>应收款项 <span class="tag" id="recvTotal"></span><button class="tb" id="recvToggle" type="button">＋ 添加应收</button></h3>
+    <div id="recvList" class="list"></div>
+    <form id="recvForm" class="frm" autocomplete="off" style="display:none">
+      <input id="rAmt" type="number" required style="flex:0 0 120px;min-width:100px">
+      <input id="rNote" type="text" maxlength="60">
+      <input id="rDue" type="date" style="flex:0 0 150px">
+      <button class="btn mint" type="submit">✓ 添加应收</button>
+    </form>
+  </div>
+</section>
+
+<!-- ========== 自由人生 ========== -->
+<section id="page-free">
+  <div class="pagehead">
+    <h2 class="pt">自由人生</h2>
+    <button class="archpill" id="archBtn" type="button">📦 归档<span class="archcnt" id="archCnt">0</span></button>
+  </div>
+  <form id="catForm" class="frm inline" autocomplete="off">
+    <input id="catName" maxlength="20" required>
+  </form>
+  <div id="catList" class="cats"></div>
+</section>
+
+<!-- ========== 一寸光阴 ========== -->
+<section id="page-time">
+  <div class="pagehead">
+    <h2 class="pt">一寸光阴 <span>· 每一天都算数</span></h2>
+    <button class="archpill" id="planToggle" type="button">＋ 添加计划</button>
+  </div>
+  <form id="planForm" class="frm" autocomplete="off" style="display:none;margin-top:10px">
+    <input id="planName" maxlength="20" required>
+    <button class="btn mint" type="submit">✓ 添加</button>
+  </form>
+  <div class="tmnav" style="margin-top:14px">
+    <button class="btn" id="tPrev">‹</button><b id="tmLabel"></b><button class="btn" id="tNext">›</button>
+    <button class="btn ghost" id="tToday">回到今天</button>
+  </div>
+  <div class="card glass">
+    <div id="ckWrap" class="ckwrap"></div>
+  </div>
+</section>
+
+<!-- ========== 岁月史书 ========== -->
+<section id="page-history">
+  <h2 class="pt">岁月史书 <span>· 所有坚持都留下了痕迹</span></h2>
+  <div class="tmnav">
+    <button class="btn" id="hPrev">‹</button><b id="hLabel"></b><button class="btn" id="hNext">›</button>
+  </div>
+  <div class="card glass"><div id="calWrap"></div></div>
+  <h3 class="pt2">✦ 故积跬步</h3>
+  <div id="guibu" class="gbgrid"></div>
+</section>
+
+</main>
+</div>
+
+<nav class="tabbar" id="tabbar">
+  <button data-page="econ" class="on"><i>💰</i><span>经济基础</span></button>
+  <button data-page="free"><i>🕊</i><span>自由人生</span></button>
+  <button data-page="time"><i>⏳</i><span>一寸光阴</span></button>
+  <button data-page="history"><i>📖</i><span>岁月史书</span></button>
+</nav>
+
+<button class="syncfab off" id="syncFab" type="button" title="云同步设置">☁</button>
+
+<!-- 云同步改为直连 GitHub Contents API，无需本地 SDK 文件 -->
+<script>
+/* ================= 数据 ================= */
+var DB = 'time_shards_v1';
+var PAL = ['#7de8c3','#8fd3f4','#c3a6ff','#ffc48f','#a0e7e5','#ffb3ae','#b5e48c','#f9c6d0','#9ad0ff','#d8f5a2'];
+function fresh(){
+  return {meta:{updatedAt:0},econ:{goals:[],progress:[],reserve:null,recv:[]},free:{cats:[]},time:{plans:[],checks:{}}};
+}
+var db;
+try{ var raw = JSON.parse(localStorage.getItem(DB)); db = (raw && raw.econ) ? raw : fresh(); }
+catch(e){ db = fresh(); }
+if(!db.meta || typeof db.meta.updatedAt !== 'number'){ db.meta = {updatedAt: db.meta && db.meta.updatedAt || 0}; }
+function save(){
+  db.meta = db.meta || {};
+  var prev = (typeof db.meta.updatedAt==='number') ? db.meta.updatedAt : 0;
+  db.meta.updatedAt = Math.max(Date.now(), prev+1); /* 单调递增：防止采用云端时间后被误判为旧数据 */
+  localStorage.setItem(DB, JSON.stringify(db));
+  scheduleUpload();
+}
+
+var $ = function(s){ return document.querySelector(s); };
+function uid(){ return Date.now().toString(36) + Math.random().toString(36).slice(2,7); }
+function esc(s){ return String(s==null?'':s).replace(/[&<>"']/g,function(c){return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c];}); }
+function dstr(d){ return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0'); }
+function today(){ return dstr(new Date()); }
+function fmt(n){ return '¥' + (Number(n)||0).toLocaleString('zh-CN',{maximumFractionDigits:2}); }
+
+/* ================= 导航 ================= */
+function go(page){
+  document.querySelectorAll('main > section').forEach(function(s){ s.classList.remove('active'); });
+  var sec = document.getElementById('page-'+page); if(sec) sec.classList.add('active');
+  document.querySelectorAll('#tabbar button').forEach(function(b){ b.classList.toggle('on', b.dataset.page===page); });
+  window.scrollTo(0,0);
+  if(page==='econ') renderEcon();
+  else if(page==='free') renderFree();
+  else if(page==='time') renderTime();
+  else if(page==='history') renderHistory();
+}
+document.getElementById('tabbar').addEventListener('click',function(e){
+  var b = e.target.closest('button'); if(b) go(b.dataset.page);
+});
+
+/* ================= 经济基础 ================= */
+function renderEcon(){
+  var e = db.econ;
+  var total = e.progress.reduce(function(s,p){ return s + (Number(p.amt)||0); },0);
+  $('#progTotal').textContent = fmt(total);
+  var ri = $('#reserveInput'); if(document.activeElement !== ri) ri.value = (e.reserve==null?'':e.reserve);
+
+  $('#goalList').innerHTML = e.goals.length ? e.goals.map(function(g){
+    var pct = g.amt>0 ? Math.min(100, Math.round(total/g.amt*100)) : 0;
+    var s=String(g.start||'').replace(/-/g,'.'), en=String(g.end||'').replace(/-/g,'.');
+    return '<div class="goal" data-id="'+g.id+'">'
+      + '<span class="gamt num-lg" data-id="'+g.id+'">'+fmt(g.amt)+'</span>'
+      + '<div class="goal-date" data-id="'+g.id+'">🗓 '+esc(s)+' → '+esc(en)+'</div>'
+      + '<div class="bar"><i style="width:'+pct+'%"></i></div>'
+      + '<div class="goal-meta"><span class="goal-pct">已完成 '+pct+'%</span>'+(g.note?'<span class="goal-note">“'+esc(g.note)+'”</span>':'')+'</div>'
+      + '<button class="mini del" data-id="'+g.id+'" title="删除此目标">✕</button></div>';
+  }).join('') : '<p class="empty">还没有存款目标，先立一个吧 ✦</p>';
+
+  $('#progList').innerHTML = e.progress.length ? e.progress.slice().reverse().map(function(p){
+    return '<div class="row"><span style="color:#6f93a0;font-size:12px">'+esc(p.date||'')+'</span><b>+'+fmt(p.amt)+'</b>'
+      + (p.note?'<i class="rn">'+esc(p.note)+'</i>':'')
+      + '<button class="mini del" data-id="'+p.id+'">✕</button></div>';
+  }).join('') : '<p class="empty">暂无进度记录，存入的第一笔都会被记得</p>';
+
+  var pend = e.recv.filter(function(r){return !r.paid;}).reduce(function(s,r){return s+(Number(r.amt)||0);},0);
+  $('#recvTotal').textContent = '待回款 ' + fmt(pend);
+  $('#recvList').innerHTML = e.recv.length ? e.recv.slice().reverse().map(function(r){
+    return '<div class="row'+(r.paid?' paid':'')+'"><b>'+fmt(r.amt)+'</b>'
+      + (r.note?'<i class="rn">'+esc(r.note)+'</i>':'')
+      + (r.due?'<span class="due">预计 '+esc(r.due)+' 回款</span>':'')
+      + '<button class="mini ok" data-id="'+r.id+'">'+(r.paid?'↩ 撤销':'✓ 已回款')+'</button>'
+      + '<button class="mini del" data-id="'+r.id+'">✕</button></div>';
+  }).join('') : '<p class="empty">暂无应收款项</p>';
+}
+
+$('#goalForm').addEventListener('submit',function(e){
+  e.preventDefault();
+  db.econ.goals.push({id:uid(),amt:+$('#gAmt').value,start:$('#gStart').value,end:$('#gEnd').value,note:$('#gNote').value.trim()});
+  save();renderEcon();this.reset();closeFold('#goalToggle','#goalForm','＋ 立个目标');toast('目标已立下 ✦');
+});
+$('#progForm').addEventListener('submit',function(e){
+  e.preventDefault();
+  db.econ.progress.push({id:uid(),amt:+$('#pAmt').value,note:$('#pNote').value.trim(),date:today()});
+  save();renderEcon();this.reset();closeFold('#progToggle','#progForm','＋ 记一笔');toast('又近了一步');
+});
+$('#recvForm').addEventListener('submit',function(e){
+  e.preventDefault();
+  db.econ.recv.push({id:uid(),amt:+$('#rAmt').value,note:$('#rNote').value.trim(),due:$('#rDue').value,paid:false});
+  save();renderEcon();this.reset();closeFold('#recvToggle','#recvForm','＋ 添加应收');toast('已添加应收');
+});
+$('#reserveInput').addEventListener('change',function(){ db.econ.reserve = this.value===''?null:+this.value; save(); toast('备用资金已更新'); });
+/* 点击金额/日期直接行内编辑，失焦/回车保存 */
+function editGoalAmount(el,g){
+  if(document.querySelector('.gamt-edit')) return;
+  var inp=document.createElement('input');
+  inp.type='number'; inp.className='gamt-edit num-lg'; inp.value=g.amt;
+  inp.style.cssText='width:100%;max-width:240px;border:1px solid #7de8c3;border-radius:10px;background:rgba(255,255,255,.9);outline:none;padding:2px 8px;';
+  el.replaceWith(inp); inp.focus();
+  try{ inp.setSelectionRange(String(g.amt).length, String(g.amt).length); }catch(err){}
+  var closed=false;
+  function commit(){
+    if(closed) return; closed=true;
+    var v=parseFloat(inp.value);
+    if(!isNaN(v) && v>=0) g.amt=v;
+    save(); renderEcon();
+  }
+  inp.addEventListener('keydown',function(ev){
+    if(ev.key==='Enter') commit();
+    else if(ev.key==='Escape'){ closed=true; renderEcon(); }
+  });
+  inp.addEventListener('blur',commit);
+}
+function editGoalDate(el,g){
+  if(document.querySelector('.goal-date-edit')) return;
+  var wrap=document.createElement('div');
+  wrap.className='goal-date-edit';
+  wrap.innerHTML='<input type="date" class="gds" value="'+esc(g.start||'')+'"> <span>→</span> <input type="date" class="gde" value="'+esc(g.end||'')+'">';
+  el.replaceWith(wrap);
+  var sInp=wrap.querySelector('.gds'), eInp=wrap.querySelector('.gde');
+  sInp.focus();
+  var closed=false, timer=null;
+  function commit(){
+    if(timer) clearTimeout(timer);
+    if(closed) return; closed=true;
+    if(sInp.value) g.start=sInp.value;
+    if(eInp.value) g.end=eInp.value;
+    save(); renderEcon();
+  }
+  function cancel(){ if(closed) return; closed=true; renderEcon(); }
+  function onKey(ev){
+    if(ev.key==='Enter') commit();
+    else if(ev.key==='Escape') cancel();
+  }
+  sInp.addEventListener('keydown',onKey); eInp.addEventListener('keydown',onKey);
+  function onBlur(){
+    if(timer) clearTimeout(timer);
+    timer=setTimeout(function(){
+      if(document.activeElement!==sInp && document.activeElement!==eInp) commit();
+    },60);
+  }
+  sInp.addEventListener('blur',onBlur); eInp.addEventListener('blur',onBlur);
+}
+$('#goalList').addEventListener('click',function(e){
+  var amtEl=e.target.closest('.gamt');
+  if(amtEl){
+    var g=db.econ.goals.find(function(x){return x.id===amtEl.dataset.id;});
+    if(g){ editGoalAmount(amtEl,g); return; }
+  }
+  var dateEl=e.target.closest('.goal-date');
+  if(dateEl){
+    var g=db.econ.goals.find(function(x){return x.id===dateEl.dataset.id;});
+    if(g){ editGoalDate(dateEl,g); return; }
+  }
+  var b=e.target.closest('.del'); if(!b)return;
+  db.econ.goals=db.econ.goals.filter(function(g){return g.id!==b.dataset.id;}); save();renderEcon();
+});
+$('#progList').addEventListener('click',function(e){
+  var b=e.target.closest('.del'); if(!b)return;
+  db.econ.progress=db.econ.progress.filter(function(p){return p.id!==b.dataset.id;}); save();renderEcon();
+});
+$('#recvList').addEventListener('click',function(e){
+  var b=e.target.closest('button'); if(!b)return;
+  var r=db.econ.recv.find(function(x){return x.id===b.dataset.id;}); if(!r)return;
+  if(b.classList.contains('ok')){ r.paid=!r.paid; toast(r.paid?'已标记回款 ✓':'已撤销回款'); }
+  else if(b.classList.contains('del')){ db.econ.recv=db.econ.recv.filter(function(x){return x.id!==r.id;}); }
+  save();renderEcon();
+});
+
+/* 折叠填写框：平时只露一个按钮，点击展开 / 收起 */
+function bindFold(btnSel, formSel, openTxt){
+  var b=$(btnSel), f=$(formSel);
+  b.addEventListener('click',function(){
+    var show = f.style.display==='none';
+    f.style.display = show ? '' : 'none';
+    b.innerHTML = show ? '收起 ▲' : openTxt;
+    if(show){ var i=f.querySelector('input'); if(i) setTimeout(function(){ i.focus(); },80); }
+  });
+}
+function closeFold(btnSel, formSel, openTxt){
+  var b=$(btnSel); if(b) b.innerHTML = openTxt;
+  var f=$(formSel); if(f) f.style.display = 'none';
+}
+bindFold('#goalToggle','#goalForm','＋ 立个目标');
+bindFold('#progToggle','#progForm','＋ 记一笔');
+bindFold('#recvToggle','#recvForm','＋ 添加应收');
+bindFold('#planToggle','#planForm','＋ 添加计划');
+
+/* 日期 ±1 年：跨年设置不再要点几百下 */
+function shiftDate(inp,dy){
+  var i=$('#'+inp); if(!i)return;
+  var v=i.value || today();
+  var d=new Date(v+'T00:00:00');
+  var y=d.getFullYear()+dy, m=d.getMonth(), dd=d.getDate();
+  var last=new Date(y,m+1,0).getDate();
+  i.value=dstr(new Date(y,m,Math.min(dd,last)));
+}
+document.querySelectorAll('.yy').forEach(function(b){
+  b.addEventListener('click',function(){ shiftDate(b.dataset.t, +b.dataset.s); });
+});
+
+/* ================= 自由人生 ================= */
+function cat(id){ for(var i=0;i<db.free.cats.length;i++){ if(db.free.cats[i].id===id) return db.free.cats[i]; } return null; }
+
+function wishHTML(c,w,i){
+  var items=w.items||[];
+  var itemsHTML = items.length ? items.map(function(it){
+    return '<div class="ws-row'+(it.done?' done':'')+'" data-id="'+it.id+'">'
+      +'<button type="button" class="ws-ck'+(it.done?' on':'')+'" data-act="subck" data-wid="'+w.id+'" data-id="'+it.id+'">'+(it.done?'✓':'')+'</button>'
+      +'<span class="ws-txt">'+esc(it.text)+'</span>'
+      +'<button type="button" class="ws-del" data-act="subdel" data-wid="'+w.id+'" data-id="'+it.id+'">✕</button>'
+      +'</div>';
+  }).join('') : '';
+  return '<div class="wish" data-cat="'+c.id+'" data-id="'+w.id+'">'
+    + '<div class="wish-card">'
+    +   '<div class="wish-head">'
+    +     '<button class="wck" data-act="archive" data-id="'+w.id+'"></button>'
+    +     '<span class="wtxt">'+esc(w.text)+'</span>'
+    +   '</div>'
+    +   '<div class="wish-sub">'
+    +     itemsHTML
+    +   '</div>'
+    + '</div>'
+  + '</div>';
+}
+function allArchived(){
+  var arr=[];
+  db.free.cats.forEach(function(c){
+    c.wishes.forEach(function(w){ if(w.archived) arr.push({c:c,w:w}); });
+  });
+  return arr;
+}
+function renderFree(){
+  var archAll=allArchived();
+  var cntEl=document.getElementById('archCnt');
+  if(cntEl) cntEl.textContent=archAll.length;
+  $('#catList').innerHTML = db.free.cats.map(function(c){
+    var act=c.wishes.filter(function(w){return !w.archived;});
+    var archN=c.wishes.length-act.length;
+    return '<div class="cat card glass" data-cat="'+c.id+'">'
+      + '<div class="cat-head"><h3>'+esc(c.name)+'</h3>'
+      + '<span class="cnt">'+act.length+' 个进行中'+(archN?' · '+archN+' 个已归档':'')+'</span>'
+      + '<button class="mini del" data-act="delcat">✕</button></div>'
+      + '<form class="addwish"><input maxlength="80" data-in="wish"></form>'
+      + '<div class="wishes">'+ (act.map(function(w,i){return wishHTML(c,w,i);}).join('') || '<p class="empty">这个分类还没有愿望</p>') +'</div></div>';
+  }).join('') || '<p class="empty">先新建一个分类吧，比如「旅游计划」「房子畅想」</p>';
+}
+/* 右上角「归档」：所有分类的已实现愿望，只按年份聚合展示 */
+function openArchive(){
+  var ov=modal('<h3>📦 归档</h3>'
+    + '<p style="font-size:12px;color:#6f93a0;margin:-6px 0 12px">已实现的愿望 · 只按年份归档，不区分分类</p>'
+    + '<div id="archList"></div>'
+    + '<div class="mrow"><button class="btn ghost" id="archX">关闭</button></div>');
+  var list=ov.querySelector('#archList');
+  function fill(){
+    var arr=allArchived().sort(function(a,b){ return (b.w.doneAt||'').localeCompare(a.w.doneAt||''); });
+    var byY={};
+    arr.forEach(function(it){ var y=(it.w.doneAt||'').slice(0,4)||'未记录'; (byY[y]=byY[y]||[]).push(it); });
+    var ys=Object.keys(byY).sort().reverse();
+    list.innerHTML = ys.length ? ys.map(function(y){
+      return '<div class="yr"><h4>'+esc(y)+' 年 · '+byY[y].length+' 个已实现</h4>'
+        + byY[y].map(function(it){
+          return '<div class="wish done"><span>✦</span><span class="wtxt">'+esc(it.w.text)+'</span>'
+            + '<span class="armeta"><span class="asrc">📂 '+esc(it.c.name)+'</span>'
+            + '<em>实现于 '+esc(it.w.doneAt||'—')+'</em>'
+            + '<span class="wbtns"><button class="mini mint" data-cat="'+it.c.id+'" data-id="'+it.w.id+'" data-act="restore">还原</button>'
+            + '<button class="mini del" data-cat="'+it.c.id+'" data-id="'+it.w.id+'" data-act="del">✕</button></span></span></div>';
+        }).join('')+'</div>';
+    }).join('') : '<p class="empty">还没有已实现的愿望，去实现一个吧 ✦</p>';
+  }
+  fill();
+  list.addEventListener('click',function(e){
+    var b=e.target.closest('button'); if(!b)return;
+    var c=cat(b.dataset.cat); if(!c)return;
+    var w=c.wishes.find(function(x){return x.id===b.dataset.id;}); if(!w)return;
+    if(b.dataset.act==='restore'){
+      w.archived=false; w.doneAt=null; save(); fill(); renderFree();
+      toast('已还原到「'+esc(c.name)+'」');
+    }else if(b.dataset.act==='del'){
+      c.wishes=c.wishes.filter(function(x){return x.id!==w.id;}); save(); fill(); renderFree();
+      toast('该愿望已删除');
+    }
+  });
+  ov.querySelector('#archX').onclick=function(){ ov.remove(); };
+}
+$('#archBtn').onclick=openArchive;
+
+$('#catForm').addEventListener('submit',function(e){
+  e.preventDefault();
+  var n=$('#catName').value.trim(); if(!n)return;
+  db.free.cats.push({id:uid(),name:n,wishes:[]});
+  save();renderFree();this.reset();toast('分类已创建');
+});
+$('#catList').addEventListener('submit',function(e){
+  var f=e.target.closest('.addwish'); if(f){ e.preventDefault(); handleAddWish(f); return; }
+});
+/* 在指定 wish 末尾追加一条空白步骤行（含事件绑定），自动聚焦 */
+function appendNewSubRow(w){
+  var newIt={id:uid(),text:'',done:false};
+  w.items.push(newIt);
+  save();
+  var wishCard=document.querySelector('.wish[data-id="'+w.id+'"]');
+  if(!wishCard) return;
+  var sub=wishCard.querySelector('.wish-sub');
+  var row=document.createElement('div');
+  row.className='ws-row';
+  row.dataset.id=newIt.id;
+  row.innerHTML='<button type="button" class="ws-ck" data-act="subck" data-wid="'+w.id+'" data-id="'+newIt.id+'"></button>'
+    +'<input class="ws-new-in" maxlength="80" data-wid="'+w.id+'" data-id="'+newIt.id+'">'
+    +'<button type="button" class="ws-del" data-act="subdel" data-wid="'+w.id+'" data-id="'+newIt.id+'">✕</button>';
+  sub.appendChild(row);
+  var nInp=row.querySelector('.ws-new-in');
+  bindNewSubRowEvents(row, nInp, w, newIt);
+  nInp.focus();
+}
+function bindNewSubRowEvents(row, nInp, w, newIt){
+  nInp.addEventListener('keydown',function(ev){
+    if(ev.key==='Enter'){
+      ev.preventDefault();
+      var v=nInp.value.trim();
+      if(!v){ return; } // 空回车：什么都不做，光标留在空白行
+      newIt.text=v;
+      save(); renderFree();
+      appendNewSubRow(w); // 在末尾继续追加一行空白
+    }else if(ev.key==='Escape'){
+      row.remove();
+      w.items=w.items.filter(function(x){return x.id!==newIt.id;});
+      save();
+    }
+  });
+  nInp.addEventListener('blur',function(){
+    if(newIt.text===''){
+      row.remove();
+      w.items=w.items.filter(function(x){return x.id!==newIt.id;});
+      save();
+    }
+  });
+}
+function handleAddWish(f){
+  var inp=f.querySelector('input'), t=inp.value.trim(); if(!t)return;
+  var c=cat(f.closest('.cat').dataset.cat);
+  var w={id:uid(),text:t,archived:false,doneAt:null,items:[]};
+  c.wishes.push(w);
+  save();renderFree();
+  // 在该愿望卡片下方直接插入一条空白步骤行
+  appendNewSubRow(w);
+}
+/* 点击愿望/清单文字 → 变成输入框（光标落末尾，不全选）：回车保存；清空回车 = 删除；Esc 取消 */
+function editInlineText(el, initial, commit, remove, onEnter){
+  if(document.querySelector('.wedit')) return;
+  var inp=document.createElement('input');
+  inp.className='wedit'; inp.value=initial; inp.maxLength=80;
+  el.replaceWith(inp);
+  inp.focus();
+  try{ inp.setSelectionRange(initial.length, initial.length); }catch(err){}
+  var closed=false;
+  function close(){ if(closed)return; closed=true; renderFree(); }
+  inp.addEventListener('keydown',function(ev){
+    if(ev.key==='Enter'){
+      ev.preventDefault();
+      var v=inp.value.trim();
+      if(!v){ remove(); }
+      else{
+        commit(v); closed=true;
+        if(onEnter) onEnter(v);
+      }
+    }else if(ev.key==='Escape'){
+      close();
+    }
+  });
+  inp.addEventListener('blur',function(){
+    if(closed)return;
+    var v=inp.value.trim();
+    if(v && v!==initial){ commit(v); closed=true; }
+    else{ close(); }
+  });
+}
+function editWishText(el,c,w){
+  editInlineText(el, w.text,
+    function(v){ w.text=v; save(); renderFree(); },
+    function(){
+      var n=w.items&&w.items.length ? '（含 '+w.items.length+' 条步骤）' : '';
+      c.wishes=c.wishes.filter(function(x){return x.id!==w.id;});
+      save(); renderFree(); toast('该愿望已删除'+n);
+    },
+    function(){ appendNewSubRow(w); });
+}
+function editSubText(el,w,it){
+  // 找出当前 item 在 wish.items 中的索引
+  var idx=w.items.findIndex(function(x){return x.id===it.id;});
+  var isLast = idx>=0 && idx===w.items.length-1;
+  editInlineText(el, it.text,
+    function(v){
+      it.text=v; save(); renderFree();
+      if(isLast){
+        // 在该愿望末尾插入一条空白步骤行（"回车开启下一行"）
+        appendNewSubRow(w);
+      }
+    },
+    function(){ w.items=w.items.filter(function(x){return x.id!==it.id;}); save(); renderFree(); toast('该步骤已删除'); });
+}
+$('#catList').addEventListener('click',function(e){
+  var t=e.target;
+  if(t && t.classList && t.classList.contains('ws-txt')){
+    var rowEl=t.closest('.ws-row'), wishE=t.closest('.wish');
+    if(rowEl && wishE){
+      var cS=cat(wishE.dataset.cat);
+      var wS=cS && cS.wishes.find(function(x){return x.id===wishE.dataset.id;});
+      var itS=wS && wS.items && wS.items.find(function(x){return x.id===rowEl.dataset.id;});
+      if(itS){ editSubText(t,wS,itS); return; }
+    }
+  }
+  if(t && t.classList && t.classList.contains('wtxt')){
+    var wishEl=t.closest('.wish');
+    if(wishEl){
+      var c0=cat(wishEl.dataset.cat), w0=c0 && c0.wishes.find(function(x){return x.id===wishEl.dataset.id;});
+      if(w0){ editWishText(t,c0,w0); return; }
+    }
+  }
+  var b=e.target.closest('button'); if(!b)return;
+  var cardEl=b.closest('.cat'); if(!cardEl)return;
+  var c=cat(cardEl.dataset.cat); if(!c)return;
+  var act=b.dataset.act, id=b.dataset.id;
+  if(act==='archive'){
+    var w=c.wishes.find(function(x){return x.id===id;});
+    if(w){ w.archived=true; w.doneAt=today(); save();renderFree(); toast('恭喜！愿望已归档 ✦'); }
+  }else if(act==='del'){
+    var w2=c.wishes.find(function(x){return x.id===id;}); if(!w2)return;
+    var noteW=w2.items&&w2.items.length ? '（含 '+w2.items.length+' 条步骤）' : '';
+    askConfirm('删除愿望', '真的要删除愿望「<b>'+esc(w2.text)+'</b>'+noteW+'吗？<br>该愿望及其所有步骤将一并删除，无法恢复。', '删除', function(){
+      c.wishes=c.wishes.filter(function(x){return x.id!==id;}); save();renderFree(); toast('该愿望已删除');
+    });
+  }else if(act==='subck'){
+    var w3=c.wishes.find(function(x){return x.id===b.dataset.wid;}); if(!w3)return;
+    var it=w3.items.find(function(x){return x.id===id;});
+    if(it){ it.done=!it.done; save(); renderFree(); }
+  }else if(act==='subdel'){
+    var w4=c.wishes.find(function(x){return x.id===b.dataset.wid;}); if(!w4)return;
+    w4.items=w4.items.filter(function(x){return x.id!==id;});
+    save(); renderFree();
+  }else if(act==='delcat'){
+    askConfirm('删除分类', '真的要删除分类「'+esc(c.name)+'」吗？<br>其中的愿望（含归档）会一起删除，且无法恢复。', '删除', function(){
+      db.free.cats=db.free.cats.filter(function(x){return x.id!==c.id;}); save();renderFree(); toast('分类已删除');
+    });
+  }
+});
+
+/* --- 排序：右键菜单 / 长按菜单 --- */
+function moveWish(catId,id,targetIdx){
+  var c=cat(catId); if(!c)return;
+  var active=c.wishes.filter(function(w){return !w.archived;});
+  var archived=c.wishes.filter(function(w){return w.archived;});
+  var cur=active.findIndex(function(w){return w.id===id;}); if(cur<0)return;
+  var t=Math.max(0,Math.min(active.length-1,targetIdx));
+  if(cur===t)return;
+  var item=active.splice(cur,1)[0];
+  active.splice(t,0,item);
+  c.wishes=active.concat(archived);
+  save();renderFree();
+}
+function openWishMenu(catId,id,x,y){
+  var c=cat(catId); if(!c)return;
+  var active=c.wishes.filter(function(w){return !w.archived;});
+  var i=active.findIndex(function(w){return w.id===id;}); if(i<0)return;
+  var items=[
+    {t:'↑  上移一位',f:function(){moveWish(catId,id,i-1);}},
+    {t:'↓  下移一位',f:function(){moveWish(catId,id,i+1);}},
+    {t:'⇄  移动到第几位…',f:function(){
+      askInput('移动愿望', '输入目标位置（1 ~ '+active.length+'）', String(i+1), '移动', function(v){
+        var n=parseInt(v,10);
+        if(!isNaN(n)) moveWish(catId,id,n-1); else toast('请输入有效数字');
+      });
+    }},
+    {t:'✦  归档（标记为已实现）',f:function(){
+      var w=c.wishes.find(function(z){return z.id===id;});
+      if(w){ w.archived=true; w.doneAt=today(); save();renderFree(); toast('恭喜！愿望已归档 ✦'); }
+    }},
+    {t:'✕  删除',cls:'danger',f:function(){
+      var w=c.wishes.find(function(z){return z.id===id;}); if(!w)return;
+      askConfirm('删除愿望', '真的要删除愿望「<b>'+esc(w.text)+'</b>'+(w.items&&w.items.length?'</b>（含 '+w.items.length+' 条步骤）':'')+'吗？<br>该愿望及其所有步骤将一并删除，无法恢复。', '删除', function(){
+        c.wishes=c.wishes.filter(function(z){return z.id!==id;}); save();renderFree(); toast('该愿望已删除');
+      });
+    }}
+  ];
+  showMenu(items,x,y);
+}
+
+/* ================= 一寸光阴 ================= */
+var tY=new Date().getFullYear(), tM=new Date().getMonth();
+function monthKey(y,m){ return y+'-'+String(m+1).padStart(2,'0'); }
+
+function renderTime(){
+  $('#tmLabel').textContent = tY+' 年 '+(tM+1)+' 月';
+  var plans=db.time.plans;
+  var last=new Date(tY,tM+1,0).getDate();
+  var h='<table class="ck-table"><thead><tr><th class="pcol">计划</th>';
+  for(var d=1;d<=last;d++){
+    var dt=new Date(tY,tM,d), wd=dt.getDay(), iso=dstr(dt);
+    h+='<th class="'+((wd===0||wd===6)?'we ':'')+(iso===today()?'tdy':'')+'">'+d+'</th>';
+  }
+  h+='</tr></thead><tbody>';
+  if(!plans.length){
+    h+='<tr><td class="pcol" colspan="'+(last+1)+'"><span class="empty">还没有打卡计划，先添加一个吧</span></td></tr>';
+  }
+  plans.forEach(function(p){
+    h+='<tr><th class="pcol"><i style="background:'+p.color+';color:'+p.color+'"></i><span class="pname" data-id="'+p.id+'" title="点击重命名计划">'+esc(p.name)+'</span><button class="mini del pdel" data-id="'+p.id+'" title="删除此计划">✕</button></th>';
+    for(var d=1;d<=last;d++){
+      var iso=dstr(new Date(tY,tM,d));
+      var rec=(db.time.checks[p.id]||{})[iso];
+      h+='<td class="ck'+((rec&&rec.done)?' on':'')+((rec&&rec.note)?' nt':'')+(iso===today()?' tdy':'')+'" data-p="'+p.id+'" data-d="'+iso+'"></td>';
+    }
+    h+='</tr>';
+  });
+  h+='</tbody></table>';
+  $('#ckWrap').innerHTML=h;
+}
+
+$('#planForm').addEventListener('submit',function(e){
+  e.preventDefault();
+  var n=$('#planName').value.trim(); if(!n)return;
+  db.time.plans.push({id:uid(),name:n,color:PAL[db.time.plans.length%PAL.length]});
+  save();renderTime();renderFree();this.reset();closeFold('#planToggle','#planForm','＋ 添加计划');toast('计划已添加');
+});
+$('#ckWrap').addEventListener('click',function(e){
+  var td=e.target.closest('td.ck'); if(!td)return;
+  var pid=td.dataset.p, d=td.dataset.d;
+  db.time.checks[pid]=db.time.checks[pid]||{};
+  var rec=db.time.checks[pid][d]||{done:false,note:''};
+  rec.done=!rec.done;
+  db.time.checks[pid][d]=rec;
+  save();renderTime();
+  if(rec.done) toast('打卡成功，今天又赢了一点 ✦');
+});
+$('#ckWrap').addEventListener('click',function(e){
+  var b=e.target.closest('.pdel'); if(!b)return;
+  e.stopPropagation();
+  var p=db.time.plans.find(function(x){return x.id===b.dataset.id;});
+  if(!p)return;
+  askConfirm('删除计划', '真的要删除「'+esc(p.name)+'」吗？<br>它的打卡与备注记录会一起删除，且无法恢复。', '删除', function(){
+    db.time.plans=db.time.plans.filter(function(x){return x.id!==p.id;});
+    delete db.time.checks[p.id];
+    save();renderTime(); toast('计划已删除');
+  });
+},true);
+$('#ckWrap').addEventListener('click',function(e){
+  var n=e.target.closest('.pname'); if(!n)return;
+  e.stopPropagation();
+  var p=db.time.plans.find(function(x){return x.id===n.dataset.id;});
+  if(!p)return;
+  askInput('重命名计划', '给计划起个新名字', p.name, '保存', function(v){
+    if(v){ p.name=v; save(); renderTime(); toast('已重命名'); }
+  });
+},true);
+$('#tPrev').onclick=function(){ tM--; if(tM<0){tM=11;tY--;} renderTime(); };
+$('#tNext').onclick=function(){ tM++; if(tM>11){tM=0;tY++;} renderTime(); };
+$('#tToday').onclick=function(){ var d=new Date(); tY=d.getFullYear(); tM=d.getMonth(); renderTime(); };
+
+function openNoteModal(pid,d){
+  var p=db.time.plans.find(function(x){return x.id===pid;});
+  db.time.checks[pid]=db.time.checks[pid]||{};
+  var rec=db.time.checks[pid][d]||{done:false,note:''};
+  var ov=modal('<h3>'+esc(p?p.name:'')+' · '+d+'</h3>'
+    +'<textarea id="noteTa" rows="4" maxlength="200">'+esc(rec.note||'')+'</textarea>'
+    +'<div class="mrow"><button class="btn mint" id="nSave">保存备注</button>'
+    +'<button class="btn" id="nClr">清除备注</button><button class="btn ghost" id="nX">关闭</button></div>');
+  ov.querySelector('#nSave').onclick=function(){
+    rec.note=ov.querySelector('#noteTa').value.trim();
+    db.time.checks[pid][d]=rec; save(); renderTime(); ov.remove(); toast('备注已保存');
+  };
+  ov.querySelector('#nClr').onclick=function(){
+    rec.note=''; db.time.checks[pid][d]=rec; save(); renderTime(); ov.remove(); toast('备注已清除');
+  };
+  ov.querySelector('#nX').onclick=function(){ ov.remove(); };
+}
+
+/* ================= 岁月史书 ================= */
+var hY=new Date().getFullYear(), hM=new Date().getMonth();
+function renderHistory(){
+  $('#hLabel').textContent = hY+' 年 '+(hM+1)+' 月';
+  var first=new Date(hY,hM,1), off=first.getDay(), last=new Date(hY,hM+1,0).getDate();
+  var h='<div class="cal">';
+  ['日','一','二','三','四','五','六'].forEach(function(w){ h+='<div class="cw">'+w+'</div>'; });
+  for(var i=0;i<off;i++) h+='<div class="cd blank"></div>';
+  for(var d=1;d<=last;d++){
+    var iso=dstr(new Date(hY,hM,d));
+    var done=db.time.plans.filter(function(p){ var r=db.time.checks[p.id]; return r&&r[iso]&&r[iso].done; });
+    var hasNote=done.some(function(p){ return db.time.checks[p.id][iso].note; });
+    h+='<div class="cd'+(iso===today()?' tdy':'')+(done.length?' has':'')+'" data-d="'+iso+'"><b>'+d+'</b>'
+      + (done.length?'<div class="dots">'+done.slice(0,4).map(function(p){return '<i style="background:'+p.color+';color:'+p.color+'" title="'+esc(p.name)+'"></i>';}).join('')
+      + (done.length>4?'<em>+'+(done.length-4)+'</em>':'')+'</div>':'')
+      + (hasNote?'<span class="nio">📝</span>':'')+'</div>';
+  }
+  h+='</div>';
+  $('#calWrap').innerHTML=h;
+
+  var mk=monthKey(hY,hM), yk=hY+'-';
+  $('#guibu').innerHTML = db.time.plans.length ? db.time.plans.map(function(p){
+    var c=db.time.checks[p.id]||{}, m=0, yr=0;
+    Object.keys(c).forEach(function(k){ if(c[k]&&c[k].done){ if(k.indexOf(mk)===0)m++; if(k.indexOf(yk)===0)yr++; } });
+    return '<div class="gb glass"><i style="background:'+p.color+';color:'+p.color+'"></i><b>'+esc(p.name)+'</b>'
+      + '<span>本月「'+esc(p.name)+'」打卡 <em>'+m+'</em> 次，今年共打卡 <em>'+yr+'</em> 次</span></div>';
+  }).join('') : '<p class="empty">还没有打卡计划，去「一寸光阴」添加一个吧</p>';
+}
+$('#hPrev').onclick=function(){ hM--; if(hM<0){hM=11;hY--;} renderHistory(); };
+$('#hNext').onclick=function(){ hM++; if(hM>11){hM=0;hY++;} renderHistory(); };
+$('#calWrap').addEventListener('click',function(e){
+  var cd=e.target.closest('.cd[data-d]'); if(!cd)return;
+  var iso=cd.dataset.d;
+  var items=db.time.plans.filter(function(p){ var r=db.time.checks[p.id]; return r&&r[iso]&&r[iso].done; });
+  var body = items.length ? items.map(function(p){
+    var note=db.time.checks[p.id][iso].note;
+    return '<div class="md-item"><b>✦ '+esc(p.name)+'</b><p>'+(note?esc(note):'无备注')+'</p></div>';
+  }).join('') : '<p class="empty">这一天没有打卡记录</p>';
+  var ov=modal('<h3>'+iso+'</h3>'+body+'<div class="mrow"><button class="btn ghost" id="nX">关闭</button></div>');
+  ov.querySelector('#nX').onclick=function(){ ov.remove(); };
+});
+
+/* ================= 右键菜单 / 长按 ================= */
+var menuEl=null;
+function closeMenu(){ if(menuEl){ menuEl.remove(); menuEl=null; } }
+document.addEventListener('click',function(e){ if(menuEl && !menuEl.contains(e.target)) closeMenu(); });
+document.addEventListener('scroll',closeMenu,true);
+function showMenu(items,x,y){
+  closeMenu();
+  var m=document.createElement('div'); m.className='ctxmenu';
+  items.forEach(function(it){
+    var b=document.createElement('button');
+    b.textContent=it.t; if(it.cls) b.className=it.cls;
+    b.onclick=function(ev){ ev.stopPropagation(); closeMenu(); it.f(); };
+    m.appendChild(b);
+  });
+  document.body.appendChild(m);
+  var r=m.getBoundingClientRect();
+  m.style.left=Math.max(8,Math.min(x,window.innerWidth-r.width-8))+'px';
+  m.style.top=Math.max(8,Math.min(y,window.innerHeight-r.height-8))+'px';
+  menuEl=m;
+}
+document.addEventListener('contextmenu',function(e){
+  var w=e.target.closest('.wish');
+  if(w && !w.classList.contains('done')){
+    e.preventDefault();
+    openWishMenu(w.dataset.cat,w.dataset.id,e.clientX,e.clientY);
+    return;
+  }
+  var c=e.target.closest('td.ck');
+  if(c){ e.preventDefault(); openNoteModal(c.dataset.p,c.dataset.d); }
+});
+
+/* 长按（手机端）：愿望排序 / 打卡备注 */
+var lpTimer=null;
+document.addEventListener('touchstart',function(e){
+  var w=e.target.closest('.wish');
+  var c=e.target.closest('td.ck');
+  var el=(w&&!w.classList.contains('done'))?w:c;
+  if(!el)return;
+  var x=e.touches[0].clientX,y=e.touches[0].clientY;
+  lpTimer=setTimeout(function(){
+    lpTimer=null;
+    if(navigator.vibrate) try{navigator.vibrate(20);}catch(_){}
+    if(el.classList.contains('wish')) openWishMenu(el.dataset.cat,el.dataset.id,x,y);
+    else openNoteModal(el.dataset.p,el.dataset.d);
+  },430);
+},{passive:true});
+document.addEventListener('touchend',function(){ if(lpTimer){clearTimeout(lpTimer);lpTimer=null;} },{passive:true});
+document.addEventListener('touchmove',function(){ if(lpTimer){clearTimeout(lpTimer);lpTimer=null;} },{passive:true});
+
+/* ================= 弹层 / 提示 ================= */
+function modal(html){
+  var ov=document.createElement('div'); ov.className='ov';
+  ov.innerHTML='<div class="modal glass">'+html+'</div>';
+  ov.addEventListener('click',function(e){ if(e.target===ov) ov.remove(); });
+  document.body.appendChild(ov);
+  return ov;
+}
+function toast(msg){
+  var t=document.createElement('div'); t.className='toast'; t.textContent=msg;
+  document.body.appendChild(t);
+  setTimeout(function(){ t.classList.add('show'); },10);
+  setTimeout(function(){ t.classList.remove('show'); setTimeout(function(){ t.remove(); },350); },1900);
+}
+/* 应用内确认框 / 输入框（不依赖系统弹窗，沙箱预览环境也可靠） */
+function askConfirm(title, html, okLabel, onOk){
+  var ov=modal('<h3>'+esc(title)+'</h3>'
+    +'<p style="font-size:13.5px;color:#5a7f8b;line-height:1.9">'+html+'</p>'
+    +'<div class="mrow"><button class="btn mint" id="aOk">'+esc(okLabel||'确认')+'</button>'
+    +'<button class="btn ghost" id="aNo">取消</button></div>');
+  ov.querySelector('#aOk').onclick=function(){ ov.remove(); onOk(); };
+  ov.querySelector('#aNo').onclick=function(){ ov.remove(); };
+}
+function askInput(title, placeholder, initial, okLabel, onOk){
+  var ov=modal('<h3>'+esc(title)+'</h3>'
+    +'<input id="aIn" maxlength="40" placeholder="'+esc(placeholder||'')+'" value="'+esc(initial==null?'':initial)+'"'
+    +' style="width:100%;padding:11px 13px;border-radius:13px;border:1px solid rgba(255,255,255,.95);background:rgba(255,255,255,.65);outline:none;font-size:14px;box-sizing:border-box">'
+    +'<div class="mrow"><button class="btn mint" id="aOk">'+esc(okLabel||'确定')+'</button>'
+    +'<button class="btn ghost" id="aNo">取消</button></div>');
+  var inp=ov.querySelector('#aIn');
+  setTimeout(function(){ inp.focus(); inp.select && inp.select(); },80);
+  function ok(){ var v=inp.value.trim(); ov.remove(); onOk(v); }
+  ov.querySelector('#aOk').onclick=ok;
+  ov.querySelector('#aNo').onclick=function(){ ov.remove(); };
+  inp.addEventListener('keydown',function(e){ if(e.key==='Enter') ok(); });
+}
+
+/* ================= 云同步（GitHub 私人仓库 · Contents API 直连 · 数据可加密） ================= */
+var SYNC_KEY='time_shards_sync_v3';
+var GH_FILE='time_shards_sync.json';
+var syncCfg=null, syncSha=null, syncBusy=false, syncDirty=false, syncTimer=null;
+(function(){
+  try{
+    var s=JSON.parse(localStorage.getItem(SYNC_KEY));
+    if(s && s.owner && s.repo && s.token){ syncCfg=s; syncSha=s.sha||null; }
+  }catch(e){}
+})();
+function syncReady(){
+  if(!syncCfg || !syncCfg.owner || !syncCfg.repo || !syncCfg.token){
+    throw new Error('请先填写 GitHub 用户名 / 仓库名 / 令牌');
+  }
+  return { owner:syncCfg.owner.trim(), repo:syncCfg.repo.trim(), token:syncCfg.token.trim() };
+}
+function syncErr(msg, status){
+  if(status===401) return new Error('令牌无效或已过期，请在 GitHub 重新生成令牌');
+  if(status===403) return new Error('GitHub 拒绝访问：令牌权限不足或触发限流，请确认令牌勾选了 repo 权限');
+  if(status===404) return new Error('仓库不存在，请检查用户名 / 仓库名是否填错');
+  if(status===409 || status===422) return new Error('云端刚被其它设备更新过，请再点一次「立即同步」');
+  return new Error(String(msg||'未知错误').slice(0,140));
+}
+/* 同步密码非空 → AES-GCM 加密；为空 → 明文（云端也能看到内容） */
+var SALT='time-shards-sync-salt-v1';
+function syncKey(pwd){
+  return crypto.subtle.importKey('raw',new TextEncoder().encode(pwd),'PBKDF2',false,['deriveKey']).then(function(k){
+    return crypto.subtle.deriveKey({name:'PBKDF2',salt:new TextEncoder().encode(SALT),iterations:80000,hash:'SHA-256'},
+      k,{name:'AES-GCM',length:256},false,['encrypt','decrypt']);
+  });
+}
+function syncEncrypt(str){
+  if(!syncCfg.pwd) return Promise.resolve(str);
+  return syncKey(syncCfg.pwd).then(function(key){
+    var iv=crypto.getRandomValues(new Uint8Array(12));
+    return crypto.subtle.encrypt({name:'AES-GCM',iv:iv},key,new TextEncoder().encode(str)).then(function(ct){
+      var out=new Uint8Array(iv.length+ct.byteLength); out.set(iv,0); out.set(new Uint8Array(ct),12);
+      var bin=''; out.forEach(function(b){ bin+=String.fromCharCode(b); });
+      return 'enc:'+btoa(bin);
+    });
+  });
+}
+function syncDecrypt(str){
+  if(!str) return Promise.resolve(null);
+  if(str.slice(0,4)!=='enc:') return Promise.resolve(str);
+  if(!syncCfg.pwd) return Promise.reject(new Error('云端数据已加密，需填写同步密码才能解密'));
+  return syncKey(syncCfg.pwd).then(function(key){
+    var bin=atob(str.slice(4)), raw=new Uint8Array(bin.length);
+    for(var i=0;i<bin.length;i++) raw[i]=bin.charCodeAt(i);
+    return crypto.subtle.decrypt({name:'AES-GCM',iv:raw.slice(0,12)},key,raw.slice(12)).then(function(pt){
+      return new TextDecoder().decode(pt);
+    });
+  });
+}
+function saveSyncCfg(){ syncCfg.sha=syncSha||undefined; localStorage.setItem(SYNC_KEY,JSON.stringify(syncCfg)); }
+function ghFetch(path, method, body){
+  var gh=syncReady();
+  var url='https://api.github.com/repos/'+encodeURIComponent(gh.owner)+'/'+encodeURIComponent(gh.repo)+'/contents/'+path;
+  var opt={ method:method, headers:{'Authorization':'Bearer '+gh.token,'Accept':'application/vnd.github+json','X-GitHub-Api-Version':'2022-11-28'} };
+  if(body){ opt.headers['Content-Type']='application/json'; opt.body=JSON.stringify(body); }
+  return fetch(url,opt).then(function(res){
+    return res.json().catch(function(){ return {}; }).then(function(j){ j._status=res.status; return j; });
+  }).then(function(j){
+    if(j._status===404 && method==='GET') return null;
+    if(j._status>=200 && j._status<300) return j;
+    throw syncErr((j&&j.message)||('HTTP '+j._status), j._status);
+  });
+}
+function b64EncodeUtf8(s){ return btoa(unescape(encodeURIComponent(s))); }
+function b64DecodeUtf8(s){
+  var t=String(s||'').replace(/\s/g,'');
+  try{ return decodeURIComponent(escape(atob(t))); }catch(e){ return atob(t); }
+}
+function ghPull(){
+  return ghFetch(GH_FILE,'GET').then(function(j){
+    if(!j || !j.content) return null;
+    syncSha=j.sha||null;
+    var obj=null;
+    try{ obj=JSON.parse(b64DecodeUtf8(j.content)); }catch(e){ throw new Error('云端文件解析失败'); }
+    if(!obj || typeof obj.ts!=='number' || typeof obj.payload!=='string') throw new Error('云端数据结构无法识别');
+    return obj;
+  });
+}
+function ghPush(payload, ts){
+  var body={ message:'时间碎片同步 '+new Date().toISOString(), content:b64EncodeUtf8(JSON.stringify({ts:ts,payload:payload})) };
+  if(syncSha) body.sha=syncSha;
+  return ghFetch(GH_FILE,'PUT',body).then(function(j){
+    syncSha=(j && j.content && j.content.sha) || j.sha || syncSha || null;
+    saveSyncCfg();
+  });
+}
+function refreshAll(){ renderEcon(); renderFree(); renderTime(); }
+function syncApplyRemote(text, cts){
+  return syncDecrypt(text).then(function(raw){
+    if(!raw) return;
+    var cdb=JSON.parse(raw);
+    if(!cdb || !cdb.econ) throw new Error('云端数据结构无法识别');
+    var lts=(db.meta&&db.meta.updatedAt)||0;
+    if(cts<=lts) return;
+    try{ localStorage.setItem(DB+'_旧数据备份_'+Date.now(), JSON.stringify(db)); }catch(e){}
+    db=cdb; if(!db.meta) db.meta={}; db.meta.updatedAt=cts;
+    localStorage.setItem(DB, JSON.stringify(db));
+    refreshAll();
+    toast('☁ 已同步到另一台设备的更新（本机旧数据已备份）');
+  });
+}
+function syncNow(){
+  if(!syncCfg || !syncCfg.owner || !syncCfg.repo || !syncCfg.token || syncBusy) return Promise.resolve(false);
+  syncBusy=true; syncDirty=false;
+  return ghPull().then(function(remote){
+    var lts=(db.meta&&db.meta.updatedAt)||0;
+    if(remote && remote.ts > lts) return syncApplyRemote(remote.payload, remote.ts);
+    if(remote && remote.ts === lts) return; /* 两边内容一致，无需上传 */
+    return syncEncrypt(JSON.stringify(db)).then(function(p){ return ghPush(p,lts); });
+  }).then(function(){
+    updateSyncFab(); return true;
+  }).catch(function(err){
+    var st=$('#sSt');
+    if(st){
+      st.textContent='同步失败：'+(err && err.message ? err.message : '无法连接到 GitHub，请检查网络后重试');
+      st.classList.add('err');
+    }
+    return false;
+  }).then(function(ok){
+    syncBusy=false;
+    if(syncDirty && ok){ syncDirty=false; return syncNow(); }
+    return ok;
+  });
+}
+function scheduleUpload(){
+  if(!syncCfg || !syncCfg.owner || !syncCfg.repo || !syncCfg.token) return;
+  if(syncTimer) clearTimeout(syncTimer);
+  syncTimer=setTimeout(function(){
+    if(syncBusy){ syncDirty=true; return; }
+    syncNow().catch(function(){});
+  },1800);
+}
+function updateSyncFab(){
+  var f=$('#syncFab'); if(!f) return;
+  var on = !!(syncCfg && syncCfg.owner && syncCfg.repo && syncCfg.token);
+  f.classList.toggle('off', !on);
+}
+function fmtTime(t){ if(!t) return '从未'; var d=new Date(t); return (d.getMonth()+1)+'月'+d.getDate()+'日 '+String(d.getHours()).padStart(2,'0')+':'+String(d.getMinutes()).padStart(2,'0'); }
+function setSyncStatus(kind, msg){
+  var st=$('#sSt'); if(!st) return;
+  if(kind==='ok'){ st.textContent = '✓ 已开启自动同步\n上次同步：'+fmtTime((syncCfg&&syncCfg.lastSyncAt)||null); st.classList.remove('err'); }
+  else if(kind==='err'){ st.textContent = '✗ '+msg; st.classList.add('err'); }
+  else if(kind==='busy'){ st.textContent = '同步中…'; st.classList.remove('err'); }
+  else { st.textContent = '尚未开启：填好 GitHub 用户名 / 仓库名 / 令牌后点「保存并同步」'; st.classList.remove('err'); }
+}
+function openSyncPanel(){
+  var oldPwd = syncCfg && syncCfg.pwd || '';
+  var ov=modal(
+    '<h3>☁ 云同步</h3>'
+    +'<p class="syn-note">用 <b style="color:#2f9d7d">GitHub 私人仓库</b>里的一个加密文件，把<b style="color:#2f9d7d">手机与电脑的数据同步</b>为同一份（完全免费）。设置同步密码后，上传前会先在本机加密，云端只存密文。</p>'
+    +'<div class="syn-lbl">GitHub 用户名</div>'
+    +'<input class="syn-in" id="sOwner" value="'+esc(syncCfg?syncCfg.owner:'')+'" placeholder="账号名，例：yourname" autocomplete="off">'
+    +'<div class="syn-lbl">仓库名</div>'
+    +'<input class="syn-in" id="sRepo" value="'+esc(syncCfg?syncCfg.repo:'')+'" placeholder="例：my-backup（私人仓库）" autocomplete="off">'
+    +'<div class="syn-lbl">访问令牌 Token</div>'
+    +'<input class="syn-in" id="sToken" type="password" value="'+esc(syncCfg?syncCfg.token:'')+'" placeholder="ghp_ 开头（需勾选 repo 权限）" autocomplete="off">'
+    +'<div class="syn-lbl">同步密码 <small>（可选，两端填相同才可互通）</small></div>'
+    +'<input class="syn-in" id="sPwd" type="password" placeholder="'+(oldPwd?'已设置，留空保持不变':'不填 = 明文，建议填写')+'" autocomplete="off">'
+    +'<div class="syn-st" id="sSt"></div>'
+    +'<div class="mrow"><button class="btn mint" id="sSave">保存并同步</button>'
+    +'<button class="btn ghost" id="sPull">立即同步</button>'
+    +'<button class="btn ghost" id="sOff">断开</button></div>'
+    +'<a class="syn-lnk" id="sHow">还没有？点开 4 步免费注册指引</a>'
+    +'<div class="syn-help" id="sHelp" style="display:none">'
+    +'① 注册：打开 <code>github.com</code>，右上角 <code>Sign up</code>，邮箱注册即可（免费）；<br>'
+    +'② 建私人仓库：点头像 → <code>Your repositories</code> → <code>New</code> → Repository name 随意填（如 <code>my-backup</code>）→ 可见性务必选 <b>Private</b> → <code>Create repository</code>；<br>'
+    +'③ 生成令牌：点头像 → <code>Settings</code> → 最底部 <code>Developer settings</code> → <code>Personal access tokens</code> → <code>Tokens (classic)</code> → <code>Generate new token (classic)</code> → Note 随意、Expiration 选 <b>No expiration</b>、勾选 <b>repo</b> 整项 → 页面底部 <code>Generate token</code> → 立刻复制 <code>ghp_…</code>（只显示一次）；<br>'
+    +'④ 把 用户名 / 仓库名 / 令牌 填回本页，点「保存并同步」。令牌只保存在你本机浏览器，请勿发给任何人。</div>');
+  setSyncStatus((syncCfg && syncCfg.owner && syncCfg.repo && syncCfg.token) ? 'ok' : 'off');
+  ov.querySelector('#sHow').onclick=function(){ var h=ov.querySelector('#sHelp'); h.style.display = h.style.display==='none' ? 'block':'none'; };
+  ov.querySelector('#sSave').onclick=function(){
+    var owner=ov.querySelector('#sOwner').value.trim(), repo=ov.querySelector('#sRepo').value.trim();
+    var token=ov.querySelector('#sToken').value.trim(), pwd=ov.querySelector('#sPwd').value;
+    if(!owner || !repo || !token){ setSyncStatus('err','用户名 / 仓库名 / 令牌不能为空'); return; }
+    var changed = !syncCfg || syncCfg.owner!==owner || syncCfg.repo!==repo || syncCfg.token!==token;
+    syncCfg={owner:owner, repo:repo, token:token, pwd: pwd ? pwd : oldPwd};
+    if(changed) syncSha=null;
+    saveSyncCfg();
+    updateSyncFab();
+    setSyncStatus('busy');
+    syncNow().then(function(ok){
+      if(!syncCfg) return;
+      syncCfg.lastSyncAt=Date.now(); saveSyncCfg();
+      if(ok){ setSyncStatus('ok'); toast('☁ 云同步已开启'); }
+    });
+  };
+  ov.querySelector('#sPull').onclick=function(){
+    if(!syncCfg){ setSyncStatus('err','请先填写并保存用户名 / 仓库名 / 令牌'); return; }
+    setSyncStatus('busy');
+    syncNow().then(function(ok){
+      if(!syncCfg) return;
+      syncCfg.lastSyncAt=Date.now(); saveSyncCfg();
+      if(ok){ setSyncStatus('ok'); toast('☁ 同步完成'); }
+    });
+  };
+  ov.querySelector('#sOff').onclick=function(){
+    localStorage.removeItem(SYNC_KEY); syncCfg=null; syncSha=null;
+    updateSyncFab(); setSyncStatus('off'); toast('已断开云同步（本机数据未动）');
+  };
+}
+var _syncFab=$('#syncFab'); if(_syncFab) _syncFab.onclick=openSyncPanel;
+
+/* ================= 背景动效 ================= */
+(function(){
+  var bg=document.getElementById('bg'), i;
+  for(i=0;i<14;i++){
+    var b=document.createElement('span'); b.className='bub';
+    var s=6+Math.random()*30;
+    b.style.width=b.style.height=s+'px';
+    b.style.left=(Math.random()*100)+'%';
+    b.style.animationDuration=(11+Math.random()*16)+'s';
+    b.style.animationDelay=(-Math.random()*20)+'s';
+    bg.appendChild(b);
+  }
+  for(i=0;i<26;i++){
+    var sp=document.createElement('span'); sp.className='sp'+(Math.random()<0.5?' b':'');
+    var d=2+Math.random()*4;
+    sp.style.width=sp.style.height=d+'px';
+    sp.style.left=(Math.random()*100)+'%';
+    sp.style.top=(Math.random()*100)+'%';
+    sp.style.animationDelay=(-Math.random()*4)+'s';
+    sp.style.animationDuration=(2.4+Math.random()*3)+'s';
+    bg.appendChild(sp);
+  }
+})();
+
+/* ================= 初始化 ================= */
+renderEcon(); renderFree(); renderTime();
+updateSyncFab();
+/* 已配置云同步 → 打开页面时后台拉一次最新数据 */
+if(syncCfg && syncCfg.owner && syncCfg.repo && syncCfg.token){
+  syncNow().then(function(ok){
+    if(syncCfg && ok){ syncCfg.lastSyncAt=Date.now(); saveSyncCfg(); }
+  });
+}
+</script>
+</body>
+</html>
