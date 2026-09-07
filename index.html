@@ -196,6 +196,7 @@ main section.active{display:block;animation:fadeIn .35s ease}
 .due:hover{background:rgba(143,211,244,.35)}
 .due.due-empty{background:transparent;padding:0 6px}
 .list .row .mini{margin-left:0}
+.recv-spacer{flex:1;min-width:8px}
 
 /* ---------- 自由人生 ---------- */
 .pagehead{display:flex;align-items:flex-start;justify-content:space-between;gap:8px 12px;flex-wrap:wrap;margin:22px 0 16px}
@@ -667,13 +668,14 @@ function renderEcon(){
   }).join('') : '<p class="empty">暂无进度记录，存入的第一笔都会被记得</p>';
 
   var pend = e.recv.filter(function(r){return !r.paid;}).reduce(function(s,r){return s+(Number(r.amt)||0);},0);
-  $('#recvTotal').textContent = '待回款 ' + fmt(pend);
+  $('#recvTotal').textContent = fmt(pend);
   $('#recvList').innerHTML = e.recv.length ? e.recv.slice().reverse().map(function(r){
+    var btns='<button class="mini ok" data-id="'+r.id+'">'+(r.paid?'↩':'✓')+'</button>'
+      + '<button class="mini del" data-id="'+r.id+'">✕</button>';
     return '<div class="row'+(r.paid?' paid':'')+'" data-id="'+r.id+'"><b data-id="'+r.id+'">'+fmt(r.amt)+'</b>'
       + '<i class="rn" data-id="'+r.id+'">'+(r.note?esc(r.note):'添加备注')+'</i>'
-      + '<button class="mini ok" data-id="'+r.id+'">'+(r.paid?'↩ 撤销':'✓ 已回款')+'</button>'
-      + '<button class="mini del" data-id="'+r.id+'">✕</button>'
-      + (r.due?'<span class="due" data-id="'+r.id+'">预计 '+esc(r.due)+' 回款</span>':'<span class="due due-empty" data-id="'+r.id+'"> </span>')+'</div>';
+      + (r.due?btns+'<span class="due" data-id="'+r.id+'">预计 '+esc(r.due)+' 回款</span>':'<span class="recv-spacer"></span>'+btns)
+      + '</div>';
   }).join('') : '<p class="empty">暂无应收款项</p>';
 }
 
