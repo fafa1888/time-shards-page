@@ -56,6 +56,8 @@ h3{font-size:16px;margin-bottom:14px;display:flex;align-items:center;gap:8px;fle
 .hint b{color:#3fae8c}
 .num-lg{font-size:34px;line-height:1.25;font-weight:800;color:#0e7a5f;letter-spacing:.5px;
   font-variant-numeric:tabular-nums}
+.prog-num{cursor:pointer;border-radius:8px;padding:2px 6px;margin:-2px -6px;width:fit-content;transition:background .15s}
+.prog-num:hover{background:rgba(125,232,195,.14)}
 .tag{font-size:12px;font-weight:400;color:#4a8fae;background:rgba(143,211,244,.22);padding:3px 10px;border-radius:20px}
 h3 .tb{
   margin-left:auto;border:none;cursor:pointer;display:inline-flex;align-items:center;gap:4px;
@@ -184,15 +186,16 @@ main section.active{display:block;animation:fadeIn .35s ease}
   box-shadow:0 0 10px rgba(125,232,195,.8)}
 .list .row{display:flex;align-items:center;gap:9px;padding:9px 11px;border-radius:13px;
   background:rgba(255,255,255,.45);border:1px solid rgba(255,255,255,.8);margin-bottom:8px;font-size:13px;flex-wrap:wrap}
-.list .row b{color:#1f8f73}
+.list .row b{color:#1f8f73;cursor:pointer;border-radius:6px;padding:1px 3px;margin:-1px -3px;transition:background .15s}
+.list .row b:hover{background:rgba(125,232,195,.14)}
 .list .row.paid{opacity:.55}
 .list .row.paid b{text-decoration:line-through}
-.rn{font-style:normal;color:#6f93a0;font-size:12px}
-.due{font-size:11.5px;color:#4a8fae;background:rgba(143,211,244,.2);padding:2px 8px;border-radius:10px;margin-left:auto}
-.list .row .mini:last-child{margin-left:auto}
-.list .row .mini.ok{margin-left:auto}
-.list .row .mini.ok:not(:last-child){margin-left:auto}
-.list .row .mini.del{margin-left:0}
+.rn{font-style:normal;color:#6f93a0;font-size:12px;cursor:pointer;border-radius:6px;padding:1px 3px;margin:-1px -3px;transition:background .15s}
+.rn:hover{background:rgba(143,211,244,.18)}
+.due{font-size:11.5px;color:#4a8fae;background:rgba(143,211,244,.2);padding:2px 8px;border-radius:10px;cursor:pointer;transition:background .15s;margin-left:auto;display:inline-block;min-width:12px;min-height:12px}
+.due:hover{background:rgba(143,211,244,.35)}
+.due.due-empty{background:transparent;padding:0 6px}
+.list .row .mini{margin-left:0}
 
 /* ---------- 自由人生 ---------- */
 .pagehead{display:flex;align-items:flex-start;justify-content:space-between;gap:8px 12px;flex-wrap:wrap;margin:22px 0 16px}
@@ -209,9 +212,13 @@ main section.active{display:block;animation:fadeIn .35s ease}
   background:rgba(255,255,255,.75);color:#0d6b53;box-sizing:border-box}
 .cats .cat{padding:18px 18px 16px}
 .cat-head{display:flex;align-items:center;gap:9px;flex-wrap:wrap;margin-bottom:12px}
-.cat-head h3{margin:0;font-size:16.5px}
+.cat-head h3{margin:0;font-size:16.5px;cursor:pointer;border-radius:8px;padding:2px 6px;margin:-2px -6px;transition:background .15s}
+.cat-head h3:hover{background:rgba(125,232,195,.14)}
 .cnt{font-size:11.5px;color:#7d9fa9}
-.cat-head .mini{margin-left:auto}
+.cat-btns{display:flex;gap:6px;margin-left:auto;align-items:center}
+.cat-head .mini{margin-left:0}
+.mini.archive{background:rgba(125,232,195,.35);color:#0d6b53;font-weight:700}
+.mini.archive:hover{background:rgba(125,232,195,.55)}
 .addwish{display:flex;gap:8px;margin-bottom:12px}
 .addwish input{flex:1;padding:9px 13px;border-radius:13px;border:1px solid rgba(255,255,255,.9);
   background:rgba(255,255,255,.55);outline:none;font-size:13.5px;min-width:0}
@@ -327,6 +334,12 @@ main section.active{display:block;animation:fadeIn .35s ease}
 .ctxmenu button:hover{background:rgba(125,232,195,.22)}
 .ctxmenu button.danger:hover{background:rgba(255,150,150,.2);color:#c04f4f}
 
+/* 岁月史书年月选择器 */
+.h-label{cursor:pointer;border-radius:10px;padding:4px 10px;margin:-4px -10px;transition:background .15s}
+.h-label:hover{background:rgba(125,232,195,.14)}
+.h-label-edit{display:flex;align-items:center;gap:8px;justify-content:center}
+.h-label-edit select{border:1px solid #7de8c3;border-radius:10px;background:rgba(255,255,255,.9);outline:none;padding:6px 10px;color:#33697a;font-size:14px;font-family:inherit;cursor:pointer}
+
 /* ---------- 一寸光阴 ---------- */
 .tmnav{display:flex;align-items:center;gap:10px;margin:4px 0 14px}
 .tmnav b{font-size:16px;color:#33697a;letter-spacing:1px;min-width:110px;text-align:center}
@@ -356,6 +369,45 @@ td.ck.on::after{content:"";position:absolute;inset:0;margin:auto;width:7px;heigh
   background:rgba(255,255,255,.95);box-shadow:0 1px 3px rgba(46,120,100,.4)}
 td.ck.nt::before{content:"";position:absolute;top:2px;right:2px;width:5px;height:5px;border-radius:50%;
   background:#ffc857;box-shadow:0 0 5px rgba(255,200,87,.9)}
+
+/* ---------- 笔记清单 ---------- */
+.note-head{display:flex;align-items:center;justify-content:space-between;gap:12px;margin-bottom:14px}
+.note-head h3{margin:0}
+.note-title-wrap{display:flex;align-items:center;gap:10px}
+.note-add{width:32px;height:32px;border-radius:50%;border:none;cursor:pointer;font-size:20px;color:#fff;
+  background:linear-gradient(135deg,#7de8c3,#8fd3f4);display:flex;align-items:center;justify-content:center;
+  box-shadow:0 4px 12px rgba(125,232,195,.4);transition:.2s}
+.note-add:hover{transform:translateY(-1px);box-shadow:0 6px 16px rgba(125,232,195,.55)}
+.note-arch{font-size:13px;color:#6f93a0;background:transparent;border:none;cursor:pointer;padding:4px 10px;border-radius:10px;transition:.15s}
+.note-arch:hover{color:#0d6b53;background:rgba(125,232,195,.14)}
+.note-list{display:flex;flex-direction:column;gap:8px}
+.note-item{display:flex;align-items:flex-start;gap:10px;padding:12px 14px;border-radius:14px;
+  background:rgba(255,255,255,.5);border:1px solid rgba(255,255,255,.8);cursor:pointer;transition:.2s}
+.note-item:hover{background:rgba(255,255,255,.8);transform:translateY(-1px)}
+.note-main{flex:1;min-width:0}
+.note-title{font-size:14px;font-weight:600;color:#2c4a53;margin-bottom:3px}
+.note-sub{font-size:12px;color:#6f93a0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.note-arch-btn{flex:none;width:28px;height:28px;border-radius:50%;border:none;background:transparent;color:#9fb8c0;font-size:15px;cursor:pointer;display:flex;align-items:center;justify-content:center;transition:.15s}
+.note-arch-btn:hover{color:#0d6b53;background:rgba(125,232,195,.18)}
+
+/* ---------- 笔记完整页面 ---------- */
+.note-page-head{display:flex;align-items:center;gap:12px;margin-bottom:18px}
+.note-back{border:none;background:transparent;color:#4f7580;font-size:14px;cursor:pointer;padding:8px 12px;border-radius:12px;transition:.15s}
+.note-back:hover{color:#0d6b53;background:rgba(125,232,195,.14)}
+.note-page-ttl{font-size:18px;font-weight:700;color:#2c4a53}
+.note-page-body{display:flex;flex-direction:column;gap:12px}
+.note-page-body input,.note-page-body textarea{width:100%;padding:12px 14px;border-radius:14px;border:1px solid rgba(255,255,255,.95);background:rgba(255,255,255,.65);outline:none;font-size:15px;box-sizing:border-box;font-family:inherit}
+.note-page-body input::placeholder,.note-page-body textarea::placeholder{color:#8fb0b8}
+.note-page-body textarea{min-height:260px;resize:vertical;line-height:1.8}
+.note-page-foot{display:flex;gap:10px;margin-top:18px}
+.note-page-foot .btn{flex:1;padding:12px 20px;border-radius:14px;border:none;font-size:14px;cursor:pointer;transition:.2s}
+.note-page-foot .btn.mint{background:linear-gradient(135deg,#7de8c3,#8fd3f4);color:#0d5c49;font-weight:600}
+.note-page-foot .btn.mint:hover{transform:translateY(-1px);box-shadow:0 6px 16px rgba(125,232,195,.4)}
+.note-page-foot .btn.ghost{background:rgba(255,255,255,.55);color:#5f8aa0}
+.note-page-foot .btn.ghost:hover{background:rgba(255,255,255,.85)}
+.note-view h2{margin:0 0 6px;font-size:22px;color:#2c4a53}
+.note-view .sub{font-size:13px;color:#6f93a0;margin-bottom:20px}
+.note-view .body{font-size:14.5px;color:#3a5760;line-height:1.9;white-space:pre-wrap;word-break:break-word}
 
 /* ---------- 岁月史书 ---------- */
 .cal{display:grid;grid-template-columns:repeat(7,1fr);gap:7px}
@@ -487,17 +539,49 @@ td.ck.nt::before{content:"";position:absolute;top:2px;right:2px;width:5px;height
   <div class="card glass">
     <div id="ckWrap" class="ckwrap"></div>
   </div>
+  <div class="card glass note-card">
+    <div class="note-head">
+      <div class="note-title-wrap">
+        <h3>笔记清单</h3>
+        <button class="note-add" id="noteAdd" type="button" title="添加笔记">＋</button>
+      </div>
+      <button class="note-arch" id="noteArchBtn" type="button">归档</button>
+    </div>
+    <div id="noteList" class="note-list"></div>
+  </div>
 </section>
 
 <!-- ========== 岁月史书 ========== -->
 <section id="page-history">
   <h2 class="pt">岁月史书 <span>· 所有坚持都留下了痕迹</span></h2>
   <div class="tmnav">
-    <button class="btn" id="hPrev">‹</button><b id="hLabel"></b><button class="btn" id="hNext">›</button>
+    <button class="btn" id="hPrev">‹</button><b id="hLabel" class="h-label" title="点击选择年月"></b><button class="btn" id="hNext">›</button>
   </div>
   <div class="card glass"><div id="calWrap"></div></div>
   <h3 class="pt2">✦ 故积跬步</h3>
   <div id="guibu" class="gbgrid"></div>
+</section>
+
+<!-- ========== 笔记详情/新增 ========== -->
+<section id="page-note">
+  <div class="note-page-head">
+    <button class="note-back" id="noteBack" type="button">‹ 返回</button>
+    <span class="note-page-ttl" id="notePageTitle">添加笔记</span>
+  </div>
+  <div id="noteEdit" class="note-page-body">
+    <input id="npTitle" maxlength="80" placeholder="标题">
+    <input id="npSub" maxlength="80" placeholder="副标题">
+    <textarea id="npBody" placeholder="正文内容"></textarea>
+  </div>
+  <div id="noteView" class="note-view" style="display:none">
+    <h2 id="npvTitle"></h2>
+    <p class="sub" id="npvSub"></p>
+    <div class="body" id="npvBody"></div>
+  </div>
+  <div class="note-page-foot" id="notePageFoot">
+    <button class="btn mint" id="npSave" type="button">保存</button>
+    <button class="btn ghost" id="npCancel" type="button">取消</button>
+  </div>
 </section>
 
 </main>
@@ -518,12 +602,14 @@ td.ck.nt::before{content:"";position:absolute;top:2px;right:2px;width:5px;height
 var DB = 'time_shards_v1';
 var PAL = ['#7de8c3','#8fd3f4','#c3a6ff','#ffc48f','#a0e7e5','#ffb3ae','#b5e48c','#f9c6d0','#9ad0ff','#d8f5a2'];
 function fresh(){
-  return {meta:{updatedAt:0},econ:{goals:[],progress:[],reserve:null,recv:[]},free:{cats:[]},time:{plans:[],checks:{}}};
+  return {meta:{updatedAt:0},econ:{goals:[],progress:[],reserve:null,recv:[],base:0},free:{cats:[],archivedCats:[]},time:{plans:[],checks:{},notes:[]}};
 }
 var db;
 try{ var raw = JSON.parse(localStorage.getItem(DB)); db = (raw && raw.econ) ? raw : fresh(); }
 catch(e){ db = fresh(); }
 if(!db.meta || typeof db.meta.updatedAt !== 'number'){ db.meta = {updatedAt: db.meta && db.meta.updatedAt || 0}; }
+if(!db.free.archivedCats) db.free.archivedCats=[];
+if(!db.time.notes) db.time.notes=[];
 function save(){
   db.meta = db.meta || {};
   var prev = (typeof db.meta.updatedAt==='number') ? db.meta.updatedAt : 0;
@@ -557,8 +643,10 @@ document.getElementById('tabbar').addEventListener('click',function(e){
 /* ================= 经济基础 ================= */
 function renderEcon(){
   var e = db.econ;
-  var total = e.progress.reduce(function(s,p){ return s + (Number(p.amt)||0); },0);
+  var sumProgress = e.progress.reduce(function(s,p){ return s + (Number(p.amt)||0); },0);
+  var total = (Number(e.base)||0) + sumProgress;
   $('#progTotal').textContent = fmt(total);
+  $('#progTotal').dataset.sum = sumProgress;
   var ri = $('#reserveInput'); if(document.activeElement !== ri) ri.value = (e.reserve==null?'':e.reserve);
 
   $('#goalList').innerHTML = e.goals.length ? e.goals.map(function(g){
@@ -573,19 +661,19 @@ function renderEcon(){
   }).join('') : '<p class="empty">还没有存款目标，先立一个吧 ✦</p>';
 
   $('#progList').innerHTML = e.progress.length ? e.progress.slice().reverse().map(function(p){
-    return '<div class="row"><span style="color:#6f93a0;font-size:12px">'+esc(p.date||'')+'</span><b>+'+fmt(p.amt)+'</b>'
-      + (p.note?'<i class="rn">'+esc(p.note)+'</i>':'')
+    return '<div class="row" data-id="'+p.id+'"><span style="color:#6f93a0;font-size:12px">'+esc(p.date||'')+'</span><b data-id="'+p.id+'">+'+fmt(p.amt)+'</b>'
+      + '<i class="rn" data-id="'+p.id+'">'+(p.note?esc(p.note):'添加备注')+'</i>'
       + '<button class="mini del" data-id="'+p.id+'">✕</button></div>';
   }).join('') : '<p class="empty">暂无进度记录，存入的第一笔都会被记得</p>';
 
   var pend = e.recv.filter(function(r){return !r.paid;}).reduce(function(s,r){return s+(Number(r.amt)||0);},0);
   $('#recvTotal').textContent = '待回款 ' + fmt(pend);
   $('#recvList').innerHTML = e.recv.length ? e.recv.slice().reverse().map(function(r){
-    return '<div class="row'+(r.paid?' paid':'')+'"><b>'+fmt(r.amt)+'</b>'
-      + (r.note?'<i class="rn">'+esc(r.note)+'</i>':'')
-      + (r.due?'<span class="due">预计 '+esc(r.due)+' 回款</span>':'')
+    return '<div class="row'+(r.paid?' paid':'')+'" data-id="'+r.id+'"><b data-id="'+r.id+'">'+fmt(r.amt)+'</b>'
+      + '<i class="rn" data-id="'+r.id+'">'+(r.note?esc(r.note):'添加备注')+'</i>'
       + '<button class="mini ok" data-id="'+r.id+'">'+(r.paid?'↩ 撤销':'✓ 已回款')+'</button>'
-      + '<button class="mini del" data-id="'+r.id+'">✕</button></div>';
+      + '<button class="mini del" data-id="'+r.id+'">✕</button>'
+      + (r.due?'<span class="due" data-id="'+r.id+'">预计 '+esc(r.due)+' 回款</span>':'<span class="due due-empty" data-id="'+r.id+'"> </span>')+'</div>';
   }).join('') : '<p class="empty">暂无应收款项</p>';
 }
 
@@ -675,11 +763,131 @@ $('#progList').addEventListener('click',function(e){
   db.econ.progress=db.econ.progress.filter(function(p){return p.id!==b.dataset.id;}); save();renderEcon();
 });
 $('#recvList').addEventListener('click',function(e){
+  var t=e.target;
+  if(t && t.classList && t.classList.contains('rn')){
+    var row=t.closest('.row'); if(!row)return;
+    var r=db.econ.recv.find(function(x){return x.id===row.dataset.id;}); if(r){ editRecvNote(t,r); return; }
+  }
+  if(t && t.classList && t.classList.contains('due')){
+    var row=t.closest('.row'); if(!row)return;
+    var r=db.econ.recv.find(function(x){return x.id===row.dataset.id;}); if(r){ editRecvDue(t,r); return; }
+  }
+  if(t && t.tagName==='B'){
+    var row=t.closest('.row'); if(!row)return;
+    var r=db.econ.recv.find(function(x){return x.id===row.dataset.id;}); if(r){ editRecvAmt(t,r); return; }
+  }
   var b=e.target.closest('button'); if(!b)return;
   var r=db.econ.recv.find(function(x){return x.id===b.dataset.id;}); if(!r)return;
   if(b.classList.contains('ok')){ r.paid=!r.paid; toast(r.paid?'已标记回款 ✓':'已撤销回款'); }
   else if(b.classList.contains('del')){ db.econ.recv=db.econ.recv.filter(function(x){return x.id!==r.id;}); }
   save();renderEcon();
+});
+
+/* 进度/应收行内编辑 */
+function editInlineNumber(el,value,commit){
+  if(document.querySelector('.nedit')) return;
+  var inp=document.createElement('input');
+  inp.type='number'; inp.className='nedit'; inp.value=value;
+  inp.style.cssText='width:100px;border:1px solid #7de8c3;border-radius:10px;background:rgba(255,255,255,.9);outline:none;padding:2px 6px;color:#1f8f73;font-weight:700;font-family:inherit;';
+  el.replaceWith(inp); inp.focus();
+  try{ inp.setSelectionRange(String(value).length, String(value).length); }catch(err){}
+  var closed=false;
+  function close(){ if(closed)return; closed=true; renderEcon(); }
+  inp.addEventListener('keydown',function(ev){
+    if(ev.key==='Enter'){
+      ev.preventDefault(); closed=true;
+      var v=parseFloat(inp.value); if(!isNaN(v) && v>=0) commit(v);
+      else renderEcon();
+    }else if(ev.key==='Escape'){ close(); }
+  });
+  inp.addEventListener('blur',function(){
+    if(closed)return; closed=true;
+    var v=parseFloat(inp.value); if(!isNaN(v) && v>=0) commit(v); else renderEcon();
+  });
+}
+function editInlineText2(el,value,placeholder,commit){
+  if(document.querySelector('.tedit')) return;
+  var inp=document.createElement('input');
+  inp.type='text'; inp.className='tedit'; inp.value=value; inp.maxLength=60; inp.placeholder=placeholder||'';
+  inp.style.cssText='flex:1;min-width:80px;border:1px solid #7de8c3;border-radius:10px;background:rgba(255,255,255,.9);outline:none;padding:2px 6px;color:#6f93a0;font-size:12px;font-family:inherit;';
+  el.replaceWith(inp); inp.focus();
+  try{ inp.setSelectionRange(value.length, value.length); }catch(err){}
+  var closed=false;
+  function close(){ if(closed)return; closed=true; renderEcon(); }
+  inp.addEventListener('keydown',function(ev){
+    if(ev.key==='Enter'){ ev.preventDefault(); closed=true; commit(inp.value.trim()); }
+    else if(ev.key==='Escape'){ close(); }
+  });
+  inp.addEventListener('blur',function(){ if(closed)return; closed=true; commit(inp.value.trim()); });
+}
+function editInlineDate(el,value,commit){
+  if(document.querySelector('.dedit')) return;
+  var inp=document.createElement('input');
+  inp.type='date'; inp.className='dedit'; inp.value=value;
+  inp.style.cssText='border:1px solid #7de8c3;border-radius:10px;background:rgba(255,255,255,.9);outline:none;padding:2px 6px;color:#4a8fae;font-size:11.5px;font-family:inherit;';
+  el.replaceWith(inp); inp.focus();
+  var closed=false;
+  function close(){ if(closed)return; closed=true; renderEcon(); }
+  inp.addEventListener('keydown',function(ev){
+    if(ev.key==='Enter'){ ev.preventDefault(); closed=true; commit(inp.value); }
+    else if(ev.key==='Escape'){ close(); }
+  });
+  inp.addEventListener('blur',function(){ if(closed)return; closed=true; commit(inp.value); });
+}
+function editProgTotal(el){
+  if(document.querySelector('.nedit')) return;
+  var sum=parseFloat(el.dataset.sum)||0;
+  var base=Number(db.econ.base)||0;
+  el.style.display='none';
+  var inp=document.createElement('input');
+  inp.type='number'; inp.className='nedit'; inp.value=sum+base;
+  inp.style.cssText='width:120px;border:1px solid #7de8c3;border-radius:10px;background:rgba(255,255,255,.9);outline:none;padding:2px 8px;color:#0e7a5f;font-weight:800;font-size:28px;font-family:inherit;';
+  el.parentNode.insertBefore(inp, el.nextSibling);
+  inp.focus();
+  try{ inp.setSelectionRange(String(sum+base).length, String(sum+base).length); }catch(err){}
+  var closed=false;
+  function commit(){
+    if(closed) return; closed=true;
+    var v=parseFloat(inp.value); inp.remove();
+    if(!isNaN(v) && v>=0){ db.econ.base = v - sum; save(); renderEcon(); }
+    else{ el.style.display=''; }
+  }
+  inp.addEventListener('keydown',function(ev){
+    if(ev.key==='Enter'){ ev.preventDefault(); commit(); }
+    else if(ev.key==='Escape'){ if(closed)return; closed=true; inp.remove(); el.style.display=''; }
+  });
+  inp.addEventListener('blur',function(){ commit(); });
+}
+function editProgressAmt(el,p){
+  editInlineNumber(el, p.amt, function(v){ p.amt=v; save(); renderEcon(); });
+}
+function editProgressNote(el,p){
+  var ph=(p.note?'':'添加备注');
+  editInlineText2(el, p.note||'', ph, function(v){ p.note=v; save(); renderEcon(); });
+}
+function editRecvAmt(el,r){
+  editInlineNumber(el, r.amt, function(v){ r.amt=v; save(); renderEcon(); });
+}
+function editRecvNote(el,r){
+  var ph=(r.note?'':'添加备注');
+  editInlineText2(el, r.note||'', ph, function(v){ r.note=v; save(); renderEcon(); });
+}
+function editRecvDue(el,r){
+  editInlineDate(el, r.due||'', function(v){ r.due=v; save(); renderEcon(); });
+}
+$('#progTotal').addEventListener('click',function(e){ editProgTotal($('#progTotal')); });
+$('#progList').addEventListener('click',function(e){
+  var t=e.target;
+  if(t && t.tagName==='B'){
+    var p=db.econ.progress.find(function(x){return x.id===t.dataset.id;});
+    if(p){ editProgressAmt(t,p); return; }
+  }
+  if(t && t.classList && t.classList.contains('rn')){
+    var p=db.econ.progress.find(function(x){return x.id===t.dataset.id;});
+    if(p){ editProgressNote(t,p); return; }
+  }
+  var b=e.target.closest('.del'); if(!b)return;
+  db.econ.progress=db.econ.progress.filter(function(p){return p.id!==b.dataset.id;}); save();renderEcon();
 });
 
 /* 折叠填写框：平时只露一个按钮，点击展开 / 收起 */
@@ -715,7 +923,11 @@ document.querySelectorAll('.yy').forEach(function(b){
 });
 
 /* ================= 自由人生 ================= */
-function cat(id){ for(var i=0;i<db.free.cats.length;i++){ if(db.free.cats[i].id===id) return db.free.cats[i]; } return null; }
+function cat(id){
+  for(var i=0;i<db.free.cats.length;i++){ if(db.free.cats[i].id===id) return db.free.cats[i]; }
+  for(var i=0;i<db.free.archivedCats.length;i++){ if(db.free.archivedCats[i].id===id) return db.free.archivedCats[i]; }
+  return null;
+}
 
 function wishHTML(c,w,i){
   var items=w.items||[];
@@ -743,19 +955,24 @@ function allArchived(){
   db.free.cats.forEach(function(c){
     c.wishes.forEach(function(w){ if(w.archived) arr.push({c:c,w:w}); });
   });
+  db.free.archivedCats.forEach(function(c){
+    c.wishes.forEach(function(w){ if(w.archived) arr.push({c:c,w:w}); });
+  });
   return arr;
 }
 function renderFree(){
   var archAll=allArchived();
   var cntEl=document.getElementById('archCnt');
   if(cntEl) cntEl.textContent=archAll.length;
-  $('#catList').innerHTML = db.free.cats.map(function(c){
+  $('#catList').innerHTML = db.free.cats.filter(function(c){return !c.archived;}).map(function(c){
     var act=c.wishes.filter(function(w){return !w.archived;});
     var archN=c.wishes.length-act.length;
     return '<div class="cat card glass" data-cat="'+c.id+'">'
-      + '<div class="cat-head"><h3>'+esc(c.name)+'</h3>'
+      + '<div class="cat-head"><h3 data-act="editcat">'+esc(c.name)+'</h3>'
       + '<span class="cnt">'+act.length+' 个进行中'+(archN?' · '+archN+' 个已归档':'')+'</span>'
-      + '<button class="mini del" data-act="delcat">✕</button></div>'
+      + '<span class="cat-btns">'
+      + '<button class="mini archive" data-act="archcat" title="归档整个分类">✓</button>'
+      + '<button class="mini del" data-act="delcat">✕</button></span></div>'
       + '<form class="addwish"><input maxlength="80" data-in="wish"></form>'
       + '<div class="wishes">'+ (act.map(function(w,i){return wishHTML(c,w,i);}).join('') || '<p class="empty">这个分类还没有愿望</p>') +'</div></div>';
   }).join('') || '<p class="empty">先新建一个分类吧，比如「旅游计划」「房子畅想」</p>';
@@ -789,10 +1006,26 @@ function openArchive(){
     var c=cat(b.dataset.cat); if(!c)return;
     var w=c.wishes.find(function(x){return x.id===b.dataset.id;}); if(!w)return;
     if(b.dataset.act==='restore'){
-      w.archived=false; w.doneAt=null; save(); fill(); renderFree();
+      var archIdx=db.free.archivedCats.findIndex(function(x){return x.id===b.dataset.cat;});
+      if(archIdx>=0){
+        var ac=db.free.archivedCats[archIdx];
+        ac.archived=false; ac.archAt=null;
+        ac.wishes.forEach(function(x){ x.archived=false; x.doneAt=null; });
+        db.free.cats.push(ac);
+        db.free.archivedCats.splice(archIdx,1);
+      }else{
+        w.archived=false; w.doneAt=null;
+      }
+      save(); fill(); renderFree();
       toast('已还原到「'+esc(c.name)+'」');
     }else if(b.dataset.act==='del'){
-      c.wishes=c.wishes.filter(function(x){return x.id!==w.id;}); save(); fill(); renderFree();
+      var archIdx2=db.free.archivedCats.findIndex(function(x){return x.id===b.dataset.cat;});
+      if(archIdx2>=0){
+        db.free.archivedCats[archIdx2].wishes=db.free.archivedCats[archIdx2].wishes.filter(function(x){return x.id!==w.id;});
+      }else{
+        c.wishes=c.wishes.filter(function(x){return x.id!==w.id;});
+      }
+      save(); fill(); renderFree();
       toast('该愿望已删除');
     }
   });
@@ -890,6 +1123,12 @@ function editInlineText(el, initial, commit, remove, onEnter){
     else{ close(); }
   });
 }
+function editCatName(el,c){
+  editInlineText2(el, c.name, '', function(v){
+    if(v){ c.name=v; save(); renderFree(); }
+    else renderFree();
+  });
+}
 function editWishText(el,c,w){
   editInlineText(el, w.text,
     function(v){ w.text=v; save(); renderFree(); },
@@ -932,6 +1171,10 @@ $('#catList').addEventListener('click',function(e){
       if(w0){ editWishText(t,c0,w0); return; }
     }
   }
+  if(t && t.tagName==='H3' && t.dataset.act==='editcat'){
+    var cardEl=t.closest('.cat'); if(!cardEl)return;
+    var c0=cat(cardEl.dataset.cat); if(c0){ editCatName(t,c0); return; }
+  }
   var b=e.target.closest('button'); if(!b)return;
   var cardEl=b.closest('.cat'); if(!cardEl)return;
   var c=cat(cardEl.dataset.cat); if(!c)return;
@@ -939,6 +1182,14 @@ $('#catList').addEventListener('click',function(e){
   if(act==='archive'){
     var w=c.wishes.find(function(x){return x.id===id;});
     if(w){ w.archived=true; w.doneAt=today(); save();renderFree(); toast('恭喜！愿望已归档 ✦'); }
+  }else if(act==='archcat'){
+    askConfirm('归档分类', '要把分类「'+esc(c.name)+'」整个归档吗？<br>其中所有愿望都会进入归档面板。', '归档', function(){
+      c.archived=true; c.archAt=today();
+      c.wishes.forEach(function(w){ w.archived=true; w.doneAt=today(); });
+      db.free.archivedCats.push(c);
+      db.free.cats=db.free.cats.filter(function(x){return x.id!==c.id;});
+      save(); renderFree(); toast('分类已归档 ✦');
+    });
   }else if(act==='del'){
     var w2=c.wishes.find(function(x){return x.id===id;}); if(!w2)return;
     var noteW=w2.items&&w2.items.length ? '（含 '+w2.items.length+' 条步骤）' : '';
@@ -1028,7 +1279,99 @@ function renderTime(){
   });
   h+='</tbody></table>';
   $('#ckWrap').innerHTML=h;
+  renderNotes();
 }
+
+function renderNotes(){
+  var active=db.time.notes.filter(function(n){return !n.archived;});
+  $('#noteList').innerHTML = active.length ? active.map(function(n){
+    return '<div class="note-item" data-id="'+n.id+'">'
+      + '<div class="note-main">'
+      + '<div class="note-title">'+esc(n.title)+'</div>'
+      + '<div class="note-sub">'+esc(n.subtitle||'')+'</div>'
+      + '</div>'
+      + '<button class="note-arch-btn" data-id="'+n.id+'" title="归档">✓</button>'
+      + '</div>';
+  }).join('') : '<p class="empty">还没有笔记，点击左侧 ＋ 添加一条</p>';
+}
+
+function openNoteAdd(){
+  $('#notePageTitle').textContent='添加笔记';
+  $('#noteEdit').style.display='flex';
+  $('#noteView').style.display='none';
+  $('#npSave').style.display='inline-block';
+  $('#npCancel').textContent='取消';
+  $('#npTitle').value=''; $('#npSub').value=''; $('#npBody').value='';
+  go('note');
+  setTimeout(function(){ $('#npTitle').focus(); },80);
+}
+$('#noteAdd').onclick=openNoteAdd;
+
+function saveNotePage(){
+  var title=$('#npTitle').value.trim(), sub=$('#npSub').value.trim(), body=$('#npBody').value.trim();
+  if(!title){ toast('请填写标题'); return; }
+  db.time.notes.push({id:uid(),title:title,subtitle:sub,body:body,archived:false,createdAt:today()});
+  save(); renderNotes(); go('time'); toast('笔记已添加');
+}
+$('#npSave').onclick=saveNotePage;
+
+function openNoteView(n){
+  $('#notePageTitle').textContent='笔记详情';
+  $('#noteEdit').style.display='none';
+  $('#noteView').style.display='block';
+  $('#npSave').style.display='none';
+  $('#npCancel').textContent='返回';
+  $('#npvTitle').textContent=n.title;
+  $('#npvSub').textContent=n.subtitle||'';
+  $('#npvBody').textContent=n.body||'暂无正文';
+  go('note');
+}
+$('#noteBack').onclick=function(){ go('time'); };
+$('#npCancel').onclick=function(){ go('time'); };
+
+$('#noteList').addEventListener('click',function(e){
+  var btn=e.target.closest('.note-arch-btn');
+  if(btn){
+    e.stopPropagation();
+    var n=db.time.notes.find(function(x){return x.id===btn.dataset.id;});
+    if(n){ n.archived=true; n.archivedAt=today(); save(); renderNotes(); toast('笔记已归档'); }
+    return;
+  }
+  var item=e.target.closest('.note-item');
+  if(item){
+    var n=db.time.notes.find(function(x){return x.id===item.dataset.id;});
+    if(n) openNoteView(n);
+  }
+});
+
+$('#noteArchBtn').onclick=function(){
+  var arch=db.time.notes.filter(function(n){return n.archived;});
+  var ov=modal('<h3>归档笔记</h3>'
+    + '<p style="font-size:12px;color:#6f93a0;margin:-6px 0 12px">共 '+arch.length+' 条已归档笔记</p>'
+    + '<div id="noteArchList"></div>'
+    + '<div class="mrow"><button class="btn ghost" id="nClose">关闭</button></div>');
+  var list=ov.querySelector('#noteArchList');
+  list.innerHTML = arch.length ? arch.map(function(n){
+    return '<div class="note-item" style="opacity:.7">'
+      + '<div class="note-main"><div class="note-title">'+esc(n.title)+'</div><div class="note-sub">'+esc(n.subtitle||'')+'</div></div>'
+      + '<button class="note-arch-btn" data-id="'+n.id+'" title="还原">↩</button>'
+      + '</div>';
+  }).join('') : '<p class="empty">还没有归档笔记</p>';
+  list.addEventListener('click',function(e){
+    var btn=e.target.closest('.note-arch-btn');
+    if(btn){
+      var n=db.time.notes.find(function(x){return x.id===btn.dataset.id;});
+      if(n){ n.archived=false; n.archivedAt=null; save(); renderNotes(); ov.remove(); toast('笔记已还原'); }
+      return;
+    }
+    var item=e.target.closest('.note-item');
+    if(item){
+      var n=db.time.notes.find(function(x){return x.id===item.dataset.id;});
+      if(n){ ov.remove(); openNoteView(n); }
+    }
+  });
+  ov.querySelector('#nClose').onclick=function(){ ov.remove(); };
+};
 
 $('#planForm').addEventListener('submit',function(e){
   e.preventDefault();
@@ -1091,7 +1434,8 @@ function openNoteModal(pid,d){
 /* ================= 岁月史书 ================= */
 var hY=new Date().getFullYear(), hM=new Date().getMonth();
 function renderHistory(){
-  $('#hLabel').textContent = hY+' 年 '+(hM+1)+' 月';
+  var lbl=$('#hLabel');
+  if(lbl && !lbl.classList.contains('h-label-edit')) lbl.textContent = hY+' 年 '+(hM+1)+' 月';
   var first=new Date(hY,hM,1), off=first.getDay(), last=new Date(hY,hM+1,0).getDate();
   var h='<div class="cal">';
   ['日','一','二','三','四','五','六'].forEach(function(w){ h+='<div class="cw">'+w+'</div>'; });
@@ -1118,6 +1462,25 @@ function renderHistory(){
 }
 $('#hPrev').onclick=function(){ hM--; if(hM<0){hM=11;hY--;} renderHistory(); };
 $('#hNext').onclick=function(){ hM++; if(hM>11){hM=0;hY++;} renderHistory(); };
+$('#hLabel').onclick=function(ev){
+  ev.stopPropagation();
+  if(document.querySelector('.h-label-edit')) return;
+  var curY=new Date().getFullYear();
+  var ys='', ms='';
+  for(var y=curY-20;y<=curY+20;y++) ys+='<option value="'+y+'"'+(y===hY?' selected':'')+'>'+y+'年</option>';
+  for(var m=1;m<=12;m++) ms+='<option value="'+(m-1)+'"'+(m-1===hM?' selected':'')+'>'+m+'月</option>';
+  var wrap=document.createElement('span');
+  wrap.className='h-label-edit';
+  wrap.innerHTML='<select id="hSelY">'+ys+'</select><select id="hSelM">'+ms+'</select>';
+  var lbl=$('#hLabel'); if(lbl) lbl.replaceWith(wrap);
+  var sy=wrap.querySelector('#hSelY'), sm=wrap.querySelector('#hSelM');
+  function apply(){ hY=+sy.value; hM=+sm.value; wrap.replaceWith(lbl); renderHistory(); }
+  sy.onchange=apply; sm.onchange=apply;
+  setTimeout(function(){
+    function outside(e){ if(!wrap.contains(e.target)){ apply(); document.removeEventListener('click',outside); } }
+    document.addEventListener('click',outside);
+  },30);
+};
 $('#calWrap').addEventListener('click',function(e){
   var cd=e.target.closest('.cd[data-d]'); if(!cd)return;
   var iso=cd.dataset.d;
