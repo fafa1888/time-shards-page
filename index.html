@@ -408,7 +408,14 @@ td.ck.nt::before{content:"";position:absolute;top:2px;right:2px;width:5px;height
 .note-page-foot .btn.ghost:hover{background:rgba(255,255,255,.85)}
 .note-view h2{margin:0 0 6px;font-size:22px;color:#2c4a53}
 .note-view .sub{font-size:13px;color:#6f93a0;margin-bottom:20px}
-.note-view .body{font-size:14.5px;color:#3a5760;line-height:1.9;white-space:pre-wrap;word-break:break-word}
+.note-view .body{font-size:14.5px;color:#3a5760;line-height:1.9;word-break:break-word}
+.note-view .body p{margin:0 0 8px}
+.note-view .body img{max-width:100%;max-height:240px;border-radius:12px;cursor:zoom-in;display:block;margin:10px 0;box-shadow:0 4px 14px rgba(120,175,195,.2)}
+.note-view .body .li-row{margin:5px 0;padding:9px 12px}
+.imgzoom{position:fixed;inset:0;z-index:500;background:rgba(18,40,48,.88);backdrop-filter:blur(10px);display:flex;align-items:center;justify-content:center;padding:20px;animation:fin .2s ease;cursor:zoom-out}
+.imgzoom img{max-width:100%;max-height:100%;border-radius:16px;box-shadow:0 20px 60px rgba(0,0,0,.35)}
+.imgzoom .imgzoom-x{position:absolute;top:18px;right:18px;width:42px;height:42px;border-radius:50%;border:none;background:rgba(255,255,255,.15);color:#fff;font-size:22px;cursor:pointer;display:flex;align-items:center;justify-content:center;transition:.2s}
+.imgzoom .imgzoom-x:hover{background:rgba(255,255,255,.25)}
 
 /* ---------- 岁月史书 ---------- */
 .cal{display:grid;grid-template-columns:repeat(7,1fr);gap:7px}
@@ -572,7 +579,7 @@ td.ck.nt::before{content:"";position:absolute;top:2px;right:2px;width:5px;height
   <div id="noteEdit" class="note-page-body">
     <input id="npTitle" maxlength="80" placeholder="标题">
     <input id="npSub" maxlength="80" placeholder="副标题">
-    <textarea id="npBody" placeholder="正文内容"></textarea>
+    <textarea id="npBody" placeholder="正文内容（可粘贴图片；用 [ ] 列待办、[x] 列已完成）"></textarea>
   </div>
   <div id="noteView" class="note-view" style="display:none">
     <h2 id="npvTitle"></h2>
@@ -620,6 +627,7 @@ function save(){
 }
 
 var $ = function(s){ return document.querySelector(s); };
+var currentNote=null;
 function uid(){ return Date.now().toString(36) + Math.random().toString(36).slice(2,7); }
 function esc(s){ return String(s==null?'':s).replace(/[&<>"']/g,function(c){return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c];}); }
 function dstr(d){ return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0'); }
@@ -1317,7 +1325,36 @@ function saveNotePage(){
 }
 $('#npSave').onclick=saveNotePage;
 
+function renderNoteBody(text){
+  if(!text) return '<p class="empty">暂无正文</p>';
+  var lines=String(text).split('\n');
+  var html='';
+  lines.forEach(function(line,i){
+    var m=line.match(/^\[([ xX])\]\s*(.*)$/);
+    if(m){
+      var done=m[1].toLowerCase()==='x';
+      html+='<div class="li-row'+(done?' li-done':'')+'" data-line="'+i+'">'
+        +'<button type="button" class="li-ck'+(done?' on':'')+'" data-line="'+i+'"></button>'
+        +'<span class="li-txt">'+esc(m[2])+'</span></div>';
+    }else if(line.trim()===''){
+      html+='<p style="margin:0;height:0.6em"></p>';
+    }else{
+      var parsed=esc(line).replace(/!\[([^\]]*)\]\(([^)]+)\)/g,function(_,alt,src){
+        return '<img src="'+esc(src)+'" alt="'+esc(alt)+'" data-zoom="1">';
+      });
+      html+='<p style="margin:0 0 8px;white-space:pre-wrap;word-break:break-word;line-height:1.9">'+parsed+'</p>';
+    }
+  });
+  return html;
+}
+function openImgZoom(src){
+  var ov=document.createElement('div'); ov.className='imgzoom';
+  ov.innerHTML='<img src="'+esc(src)+'" alt=""><button class="imgzoom-x">×</button>';
+  ov.addEventListener('click',function(e){ if(e.target===ov || e.target.closest('.imgzoom-x')) ov.remove(); });
+  document.body.appendChild(ov);
+}
 function openNoteView(n){
+  currentNote=n;
   $('#notePageTitle').textContent='笔记详情';
   $('#noteEdit').style.display='none';
   $('#noteView').style.display='block';
@@ -1325,7 +1362,7 @@ function openNoteView(n){
   $('#npCancel').textContent='返回';
   $('#npvTitle').textContent=n.title;
   $('#npvSub').textContent=n.subtitle||'';
-  $('#npvBody').textContent=n.body||'暂无正文';
+  $('#npvBody').innerHTML=renderNoteBody(n.body);
   go('note');
 }
 $('#noteBack').onclick=function(){ go('time'); };
@@ -1374,6 +1411,47 @@ $('#noteArchBtn').onclick=function(){
   });
   ov.querySelector('#nClose').onclick=function(){ ov.remove(); };
 };
+
+function insertAtCursor(ta,text){
+  var start=ta.selectionStart||0, end=ta.selectionEnd||0;
+  ta.value=ta.value.slice(0,start)+text+ta.value.slice(end);
+  var pos=start+text.length;
+  ta.selectionStart=ta.selectionEnd=pos;
+  ta.focus();
+}
+$('#npBody').addEventListener('paste',function(e){
+  var items=e.clipboardData && e.clipboardData.items;
+  if(!items) return;
+  var file=null;
+  for(var i=0;i<items.length;i++){
+    if(items[i].kind==='file' && items[i].type.indexOf('image/')===0){ file=items[i].getAsFile(); break; }
+  }
+  if(!file) return;
+  e.preventDefault();
+  var reader=new FileReader();
+  reader.onload=function(ev){ insertAtCursor($('#npBody'),'![image]('+ev.target.result+')\n'); };
+  reader.readAsDataURL(file);
+});
+
+$('#npvBody').addEventListener('click',function(e){
+  var ck=e.target.closest('.li-ck');
+  if(ck && currentNote){
+    var lines=String(currentNote.body||'').split('\n');
+    var idx=+ck.dataset.line;
+    if(idx>=0 && idx<lines.length){
+      var m=lines[idx].match(/^\[([ xX])\]\s*(.*)$/);
+      if(m){
+        lines[idx]='['+(m[1].toLowerCase()==='x'?' ':'x')+'] '+m[2];
+        currentNote.body=lines.join('\n');
+        save();
+        openNoteView(currentNote);
+      }
+    }
+    return;
+  }
+  var img=e.target.closest('img[data-zoom]');
+  if(img) openImgZoom(img.src);
+});
 
 $('#planForm').addEventListener('submit',function(e){
   e.preventDefault();
