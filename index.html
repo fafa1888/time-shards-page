@@ -907,7 +907,7 @@ function tickRev(){
   var start=new Date(now.getFullYear(), now.getMonth(), now.getDate(), 9, 0, 0);
   var end=new Date(start.getTime()+hrs*3600*1000);
   var elapsedSec=Math.max(0, Math.min((now-start)/1000, hrs*3600));
-  var earned=hourly*elapsedSec;
+  var earned=(sal/days/hrs/3600)*elapsedSec;
   var remainMs=Math.max(0, end-now);
   $('#rvHourly').textContent='¥'+hourly.toFixed(2);
   $('#rvEarned').textContent='¥'+earned.toFixed(3);
