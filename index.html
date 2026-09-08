@@ -422,6 +422,11 @@ td.ck.nt::before{content:"";position:absolute;top:2px;right:2px;width:5px;height
 .note-view .body .img-del{position:absolute;top:6px;right:6px;width:26px;height:26px;border-radius:50%;border:none;background:rgba(255,255,255,.88);color:#d76b7e;font-size:14px;cursor:pointer;display:flex;align-items:center;justify-content:center;box-shadow:0 2px 8px rgba(0,0,0,.15);opacity:0;transition:.2s}
 .note-view .body .img-del:hover{background:#fff}
 .note-view .body .li-row{margin:5px 0;padding:9px 12px}
+.np-img-grid{display:flex;gap:10px;flex-wrap:wrap;margin-top:8px}
+.np-img-thumb{position:relative;width:72px;height:72px;border-radius:12px;overflow:hidden;background:rgba(255,255,255,.55);border:1px solid rgba(255,255,255,.9);box-shadow:0 4px 12px rgba(120,175,195,.15)}
+.np-img-thumb img{width:100%;height:100%;object-fit:cover}
+.np-img-rm{position:absolute;top:3px;right:3px;width:20px;height:20px;border-radius:50%;border:none;background:rgba(255,255,255,.85);color:#d76b7e;font-size:11px;cursor:pointer;display:flex;align-items:center;justify-content:center;padding:0}
+.np-img-rm:hover{background:#fff}
 .imgzoom{position:fixed;inset:0;z-index:500;background:rgba(18,40,48,.88);backdrop-filter:blur(10px);display:flex;align-items:center;justify-content:center;padding:20px;animation:fin .2s ease;cursor:zoom-out}
 .imgzoom img{max-width:100%;max-height:100%;border-radius:16px;box-shadow:0 20px 60px rgba(0,0,0,.35)}
 .imgzoom .imgzoom-x{position:absolute;top:18px;right:18px;width:42px;height:42px;border-radius:50%;border:none;background:rgba(255,255,255,.15);color:#fff;font-size:22px;cursor:pointer;display:flex;align-items:center;justify-content:center;transition:.2s}
@@ -595,6 +600,7 @@ td.ck.nt::before{content:"";position:absolute;top:2px;right:2px;width:5px;height
     <input id="npTitle" maxlength="80" placeholder="标题">
     <input id="npSub" maxlength="80" placeholder="副标题">
     <textarea id="npBody" placeholder="正文内容（可粘贴图片；用 [ ] 列待办、[x] 列已完成）"></textarea>
+    <div id="npImgPreview" style="display:none"></div>
   </div>
   <div id="noteView" class="note-view" style="display:none">
     <h2 id="npvTitle"></h2>
@@ -1357,20 +1363,47 @@ function renderNotes(){
   }).join('') : '<p class="empty">还没有笔记，点击左侧 ＋ 添加一条</p>';
 }
 
+var npImgCache={};
+function bodyWithCache(body){
+  npImgCache={};
+  var idx=0;
+  return String(body||'').replace(/!\[([^\]]*)\]\((data:image\/[^)]+)\)/g,function(_,alt,src){
+    var id='img_'+Date.now()+'_'+(idx++);
+    npImgCache[id]=src;
+    return '![图片](imgcache://'+id+')';
+  });
+}
+function renderNpImgPreview(){
+  var ta=$('#npBody'), wrap=$('#npImgPreview');
+  if(!wrap) return;
+  var ids=[];
+  ta.value.replace(/!\[图片\]\(imgcache:\/\/([^)]+)\)/g,function(_,id){ ids.push(id); });
+  if(ids.length===0){ wrap.innerHTML=''; wrap.style.display='none'; return; }
+  wrap.style.display='block';
+  wrap.innerHTML='<div class="np-img-grid">'+ids.map(function(id){
+    var src=npImgCache[id];
+    return src ? '<div class="np-img-thumb" data-id="'+id+'"><img src="'+esc(src)+'"><button type="button" class="np-img-rm" data-id="'+id+'" title="删除">✕</button></div>' : '';
+  }).join('')+'</div>';
+}
 function openNoteAdd(){
+  npImgCache={};
   $('#notePageTitle').textContent='添加笔记';
   $('#noteEdit').style.display='flex';
   $('#noteView').style.display='none';
   $('#npSave').style.display='inline-block';
   $('#npCancel').textContent='取消';
   $('#npTitle').value=''; $('#npSub').value=''; $('#npBody').value='';
+  renderNpImgPreview();
   go('note');
   setTimeout(function(){ $('#npTitle').focus(); },80);
 }
 $('#noteAdd').onclick=openNoteAdd;
 
 function saveNotePage(){
-  var title=$('#npTitle').value.trim(), sub=$('#npSub').value.trim(), body=$('#npBody').value.trim();
+  var title=$('#npTitle').value.trim(), sub=$('#npSub').value.trim();
+  var body=$('#npBody').value.replace(/!\[图片\]\(imgcache:\/\/([^)]+)\)/g,function(_,id){
+    return npImgCache[id] ? '![图片]('+npImgCache[id]+')' : '';
+  }).trim();
   if(!title){ toast('请填写标题'); return; }
   if(currentNote){
     currentNote.title=title; currentNote.subtitle=sub; currentNote.body=body;
@@ -1389,7 +1422,9 @@ function openNoteEdit(n){
   $('#noteView').style.display='none';
   $('#npSave').style.display='inline-block';
   $('#npCancel').textContent='取消';
-  $('#npTitle').value=n.title||''; $('#npSub').value=n.subtitle||''; $('#npBody').value=n.body||'';
+  $('#npTitle').value=n.title||''; $('#npSub').value=n.subtitle||'';
+  $('#npBody').value=bodyWithCache(n.body||'');
+  renderNpImgPreview();
   setTimeout(function(){ $('#npTitle').focus(); },80);
 }
 
@@ -1513,8 +1548,23 @@ $('#npBody').addEventListener('paste',function(e){
   if(!file) return;
   e.preventDefault();
   var reader=new FileReader();
-  reader.onload=function(ev){ insertAtCursor($('#npBody'),'![image]('+ev.target.result+')\n'); };
+  reader.onload=function(ev){
+    var id='img_'+Date.now()+'_'+Math.random().toString(36).slice(2,7);
+    npImgCache[id]=ev.target.result;
+    insertAtCursor($('#npBody'),'![图片](imgcache://'+id+')\n');
+    renderNpImgPreview();
+  };
   reader.readAsDataURL(file);
+});
+$('#npBody').addEventListener('input',renderNpImgPreview);
+$('#npImgPreview').addEventListener('click',function(e){
+  var btn=e.target.closest('.np-img-rm');
+  if(!btn) return;
+  var id=btn.dataset.id;
+  delete npImgCache[id];
+  var ta=$('#npBody');
+  ta.value=ta.value.replace(new RegExp('!\\[图片\\]\\(imgcache://'+id.replace(/[.*+?^${}()|[\]\\]/g,'\\$&')+'\\)'),'');
+  renderNpImgPreview();
 });
 
 $('#npvBody').addEventListener('click',function(e){
