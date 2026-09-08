@@ -918,11 +918,8 @@ function tickRev(){
   var rev=db.econ.revolution; if(!rev) return;
   var sal=+rev.salary, days=+rev.days, hrs=+rev.hours, ann=+rev.annual;
   if(!(sal>0) || !(days>0) || !(hrs>0)) return;
-  // 数据兜底
-  if(typeof rev.monthEarned!=='number') rev.monthEarned=0;
   if(typeof rev.otherIncome!=='number') rev.otherIncome=0;
-  if(typeof rev.lastDayAmount!=='number') rev.lastDayAmount=0;
-  var hourly=sal/days/hrs;
+  var hourly=sal/days/hrs; // 元/小时
   var now=new Date();
   // 解析上下班时间（HH:MM），支持跨天
   var sStr=rev.start||'09:00', eStr=rev.end||'18:00';
@@ -933,31 +930,15 @@ function tickRev(){
   if(end.getTime() <= start.getTime()) end=new Date(end.getTime()+86400000); // 跨天
   var totalSec=(end.getTime()-start.getTime())/1000;
   var elapsedSec=Math.max(0, Math.min((now.getTime()-start.getTime())/1000, totalSec));
-  var earned=(sal/days/hrs/3600)*elapsedSec;
+  var earned=hourly/3600*elapsedSec; // 今日实时已赚（元）
   var remainMs=Math.max(0, end.getTime()-now.getTime());
-  // 跨月：清零本月累计
-  var monthKey=(now.getFullYear()+'-'+(now.getMonth()+1));
-  if(!rev.monthKey){ rev.monthKey=monthKey; }
-  else if(rev.monthKey!==monthKey){ rev.monthEarned=0; rev.monthKey=monthKey; rev.lastDayKey=null; rev.lastDayAmount=0; }
-  // 跨日：把昨日已赚累加到本月
-  var dayKey=now.getFullYear()+'-'+(now.getMonth()+1)+'-'+now.getDate();
-  if(!rev.lastDayKey){ rev.lastDayKey=dayKey; rev.lastDayAmount=0; }
-  else if(rev.lastDayKey!==dayKey){
-    rev.monthEarned=(rev.monthEarned||0)+(rev.lastDayAmount||0);
-    rev.lastDayKey=dayKey; rev.lastDayAmount=0;
-  }
-  // 每 10 秒保存一次"今日已赚"到 lastDayAmount，并落盘（避免秒级 save 拖慢页面）
-  if(!rev._lastSaveTs) rev._lastSaveTs=0;
-  if(now.getTime()-rev._lastSaveTs>10000){
-    rev.lastDayAmount=earned;
-    rev._lastSaveTs=now.getTime();
-    save();
-  }
+  // 本月累计：本月 1 号～昨天每天按满额日薪计（与打开过几天无关，隔几天打开也自动正确），今天按实时
+  var dayIncome=sal/days; // 日薪 = 月薪 ÷ 本月工作天数
+  var monthEarned=(now.getDate()-1)*dayIncome+earned;
   // 显示
-  var monthTotal=(rev.monthEarned||0)+earned;
   var perSec=ann>0?ann/31536000:0;
   var freeSec=perSec>0?earned/perSec:0;
-  var monthFreeSec=perSec>0?(monthTotal+(+rev.otherIncome||0))/perSec:0;
+  var monthFreeSec=perSec>0?(monthEarned+(+rev.otherIncome||0))/perSec:0;
   $('#rvHourly').textContent='¥'+hourly.toFixed(2);
   $('#rvEarned').textContent='¥'+earned.toFixed(3);
   $('#rvCountdown').textContent=fmtCountdown(remainMs/1000);
