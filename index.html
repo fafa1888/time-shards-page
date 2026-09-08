@@ -191,6 +191,9 @@ main section.active{display:block;animation:fadeIn .35s ease}
 .rev-card .rev-line:last-child{border-bottom:none}
 .rev-card .rev-line span{color:#5f8aa0;flex:0 0 auto}
 .rev-card .rev-line b{color:#0d6b53;font-weight:600;margin-left:auto;font-size:15.5px;font-variant-numeric:tabular-nums;letter-spacing:.4px}
+.rev-card .rev-line b.editable{cursor:pointer;border-radius:8px;padding:1px 8px;transition:background .15s;border:1px dashed transparent}
+.rev-card .rev-line b.editable:hover{background:rgba(125,232,195,.18);border-color:rgba(125,232,195,.45)}
+.rev-card .rev-line b.monthfree{color:#c95c8a}
 .rev-time-row{display:flex;align-items:center;gap:8px;width:100%}
 .rev-time-row input[type=time]{flex:1;min-width:0;padding:11px 10px;border-radius:14px;border:1.5px solid rgba(125,232,195,.55);background:rgba(255,255,255,.55);font-family:inherit;font-size:14px;color:#0d6b53;text-align:center;font-variant-numeric:tabular-nums}
 .rev-time-row .arr{color:#7ec8b8;font-size:16px;font-weight:700;flex:0 0 auto}
@@ -564,6 +567,8 @@ td.ck.nt::before{content:"";position:absolute;top:2px;right:2px;width:5px;height
       <div class="rev-line"><span>今日已赚钱</span><b id="rvEarned">¥0.000</b></div>
       <div class="rev-line"><span>将支持你的自由人生</span><b id="rvFree">--天--时--分</b></div>
       <div class="rev-line"><span>时薪</span><b id="rvHourly">¥0.00</b></div>
+      <div class="rev-line"><span>其他收入</span><b id="rvOther" class="editable" title="点击直接修改">¥0.00</b></div>
+      <div class="rev-line"><span>本月收入将支持你的自由人生</span><b id="rvMonthFree" class="monthfree">--天--时--分</b></div>
     </div>
   </div>
 </section>
@@ -903,12 +908,20 @@ function renderRev(){
   var rev=db.econ.revolution;
   if(!rev){ $('#revForm').style.display=''; $('#revView').style.display='none'; $('#revToggle').style.display='none'; return; }
   $('#revForm').style.display='none'; $('#revView').style.display=''; $('#revToggle').style.display='';
+  // 其他收入由用户手动维护，不在 tickRev 里覆盖（避免编辑时被每秒刷新打断）
+  if(!document.querySelector('.nedit')){
+    $('#rvOther').textContent='¥'+((+rev.otherIncome||0)).toFixed(2);
+  }
   tickRev();
 }
 function tickRev(){
   var rev=db.econ.revolution; if(!rev) return;
   var sal=+rev.salary, days=+rev.days, hrs=+rev.hours, ann=+rev.annual;
   if(!(sal>0) || !(days>0) || !(hrs>0)) return;
+  // 数据兜底
+  if(typeof rev.monthEarned!=='number') rev.monthEarned=0;
+  if(typeof rev.otherIncome!=='number') rev.otherIncome=0;
+  if(typeof rev.lastDayAmount!=='number') rev.lastDayAmount=0;
   var hourly=sal/days/hrs;
   var now=new Date();
   // 解析上下班时间（HH:MM），支持跨天
@@ -922,12 +935,34 @@ function tickRev(){
   var elapsedSec=Math.max(0, Math.min((now.getTime()-start.getTime())/1000, totalSec));
   var earned=(sal/days/hrs/3600)*elapsedSec;
   var remainMs=Math.max(0, end.getTime()-now.getTime());
+  // 跨月：清零本月累计
+  var monthKey=(now.getFullYear()+'-'+(now.getMonth()+1));
+  if(!rev.monthKey){ rev.monthKey=monthKey; }
+  else if(rev.monthKey!==monthKey){ rev.monthEarned=0; rev.monthKey=monthKey; rev.lastDayKey=null; rev.lastDayAmount=0; }
+  // 跨日：把昨日已赚累加到本月
+  var dayKey=now.getFullYear()+'-'+(now.getMonth()+1)+'-'+now.getDate();
+  if(!rev.lastDayKey){ rev.lastDayKey=dayKey; rev.lastDayAmount=0; }
+  else if(rev.lastDayKey!==dayKey){
+    rev.monthEarned=(rev.monthEarned||0)+(rev.lastDayAmount||0);
+    rev.lastDayKey=dayKey; rev.lastDayAmount=0;
+  }
+  // 每 10 秒保存一次"今日已赚"到 lastDayAmount，并落盘（避免秒级 save 拖慢页面）
+  if(!rev._lastSaveTs) rev._lastSaveTs=0;
+  if(now.getTime()-rev._lastSaveTs>10000){
+    rev.lastDayAmount=earned;
+    rev._lastSaveTs=now.getTime();
+    save();
+  }
+  // 显示
+  var monthTotal=(rev.monthEarned||0)+earned;
+  var perSec=ann>0?ann/31536000:0;
+  var freeSec=perSec>0?earned/perSec:0;
+  var monthFreeSec=perSec>0?(monthTotal+(+rev.otherIncome||0))/perSec:0;
   $('#rvHourly').textContent='¥'+hourly.toFixed(2);
   $('#rvEarned').textContent='¥'+earned.toFixed(3);
   $('#rvCountdown').textContent=fmtCountdown(remainMs/1000);
-  var perSec=ann>0?ann/31536000:0;
-  var freeSec=perSec>0?earned/perSec:0;
   $('#rvFree').textContent=fmtDHM(freeSec);
+  $('#rvMonthFree').textContent=fmtDHM(monthFreeSec);
 }
 function startRevTick(){ stopRevTick(); revTimer=setInterval(tickRev, 1000); tickRev(); }
 function stopRevTick(){ if(revTimer){ clearInterval(revTimer); revTimer=null; } }
@@ -963,6 +998,38 @@ $('#revToggle').addEventListener('click',function(){
   }
   $('#revForm').style.display=''; $('#revView').style.display='none'; $('#revToggle').style.display='none';
   setTimeout(function(){ $('#rvAnnual').focus(); }, 80);
+});
+
+/* 其他收入行内编辑（无需点设置） */
+$('#rvOther').addEventListener('click', function(){
+  if(document.querySelector('.nedit')) return;
+  var rev=db.econ.revolution; if(!rev) return;
+  var b=$('#rvOther');
+  var inp=document.createElement('input');
+  inp.type='number'; inp.className='nedit'; inp.min='0'; inp.step='0.01';
+  inp.value=rev.otherIncome||0;
+  inp.style.cssText='width:140px;border:1px solid #7de8c3;border-radius:10px;background:rgba(255,255,255,.92);outline:none;padding:2px 8px;color:#0d6b53;font-weight:600;font-family:inherit;font-size:15.5px;text-align:right;font-variant-numeric:tabular-nums;margin-left:auto;';
+  b.style.display='none';
+  b.parentNode.insertBefore(inp, b);
+  inp.focus(); try{ inp.select(); }catch(e){}
+  var done=false;
+  function finish(update){
+    if(done) return; done=true;
+    if(update){
+      var v=parseFloat(inp.value);
+      rev.otherIncome=(!isNaN(v) && v>=0)?v:0;
+      save();
+    }
+    if(inp.parentNode) inp.parentNode.removeChild(inp);
+    b.style.display='';
+    b.textContent='¥'+((+rev.otherIncome||0)).toFixed(2);
+    tickRev();
+  }
+  inp.addEventListener('blur', function(){ finish(true); });
+  inp.addEventListener('keydown', function(ev){
+    if(ev.key==='Enter'){ ev.preventDefault(); finish(true); }
+    else if(ev.key==='Escape'){ ev.preventDefault(); finish(false); }
+  });
 });
 
 /* 进度/应收行内编辑 */
