@@ -416,7 +416,11 @@ td.ck.nt::before{content:"";position:absolute;top:2px;right:2px;width:5px;height
 .note-view .body .empty{display:inline-block;padding:10px 12px;margin:-10px -12px;border-radius:14px;transition:background .15s}
 .note-view .body .empty:hover{background:rgba(125,232,195,.12)}
 .note-view .body p{margin:0 0 8px}
+.note-view .body .img-wrap{position:relative;display:inline-block;max-width:100%}
 .note-view .body img{max-width:100%;max-height:240px;border-radius:12px;cursor:zoom-in;display:block;margin:10px 0;box-shadow:0 4px 14px rgba(120,175,195,.2)}
+.note-view .body .img-wrap:hover .img-del{opacity:1}
+.note-view .body .img-del{position:absolute;top:6px;right:6px;width:26px;height:26px;border-radius:50%;border:none;background:rgba(255,255,255,.88);color:#d76b7e;font-size:14px;cursor:pointer;display:flex;align-items:center;justify-content:center;box-shadow:0 2px 8px rgba(0,0,0,.15);opacity:0;transition:.2s}
+.note-view .body .img-del:hover{background:#fff}
 .note-view .body .li-row{margin:5px 0;padding:9px 12px}
 .imgzoom{position:fixed;inset:0;z-index:500;background:rgba(18,40,48,.88);backdrop-filter:blur(10px);display:flex;align-items:center;justify-content:center;padding:20px;animation:fin .2s ease;cursor:zoom-out}
 .imgzoom img{max-width:100%;max-height:100%;border-radius:16px;box-shadow:0 20px 60px rgba(0,0,0,.35)}
@@ -1389,6 +1393,7 @@ function openNoteEdit(n){
   setTimeout(function(){ $('#npTitle').focus(); },80);
 }
 
+function escReg(s){ return s.replace(/[.*+?^${}()|[\]\\]/g,'\\$&'); }
 function renderNoteBody(text){
   if(!text) return '<p class="empty">暂无正文</p>';
   var lines=String(text).split('\n');
@@ -1399,12 +1404,13 @@ function renderNoteBody(text){
       var done=m[1].toLowerCase()==='x';
       html+='<div class="li-row'+(done?' li-done':'')+'" data-line="'+i+'">'
         +'<button type="button" class="li-ck'+(done?' on':'')+'" data-line="'+i+'"></button>'
-        +'<span class="li-txt">'+esc(m[2])+'</span></div>';
+        +'<span class="li-txt">'+esc(m[2])+'</span>'
+        +'<button type="button" class="li-del" data-line="'+i+'" title="删除">✕</button></div>';
     }else if(line.trim()===''){
       html+='<p style="margin:0;height:0.6em"></p>';
     }else{
       var parsed=esc(line).replace(/!\[([^\]]*)\]\(([^)]+)\)/g,function(_,alt,src){
-        return '<img src="'+esc(src)+'" alt="'+esc(alt)+'" data-zoom="1">';
+        return '<span class="img-wrap"><img src="'+esc(src)+'" alt="'+esc(alt)+'" data-zoom="1" data-line="'+i+'" data-src="'+esc(src)+'"><button type="button" class="img-del" data-line="'+i+'" data-src="'+esc(src)+'" title="删除图片">✕</button></span>';
       });
       html+='<p style="margin:0 0 8px;white-space:pre-wrap;word-break:break-word;line-height:1.9">'+parsed+'</p>';
     }
@@ -1524,6 +1530,35 @@ $('#npvBody').addEventListener('click',function(e){
         save();
         openNoteView(currentNote);
       }
+    }
+    return;
+  }
+  var delCk=e.target.closest('.li-del');
+  if(delCk && currentNote){
+    var lines=String(currentNote.body||'').split('\n');
+    var idx=+delCk.dataset.line;
+    if(idx>=0 && idx<lines.length){
+      lines.splice(idx,1);
+      currentNote.body=lines.join('\n');
+      save();
+      openNoteView(currentNote);
+      toast('待办已删除');
+    }
+    return;
+  }
+  var imgDel=e.target.closest('.img-del');
+  if(imgDel && currentNote){
+    var lines=String(currentNote.body||'').split('\n');
+    var idx=+imgDel.dataset.line;
+    var src=imgDel.dataset.src;
+    if(idx>=0 && idx<lines.length && src){
+      var re=new RegExp('!\\[[^\\]]*\\]\\('+escReg(src)+'\\)');
+      lines[idx]=lines[idx].replace(re,'').trim();
+      if(lines[idx]==='') lines.splice(idx,1);
+      currentNote.body=lines.join('\n');
+      save();
+      openNoteView(currentNote);
+      toast('图片已删除');
     }
     return;
   }
