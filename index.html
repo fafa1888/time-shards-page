@@ -2089,7 +2089,11 @@ function syncApplyRemote(text, cts){
     var lts=(db.meta&&db.meta.updatedAt)||0;
     if(cts<=lts) return;
     try{ localStorage.setItem(DB+'_旧数据备份_'+Date.now(), JSON.stringify(db)); }catch(e){}
+    /* 合并而非整体覆盖：云端为主体，但保留本机独有的非空字段，防止新功能数据被旧设备覆盖丢失 */
+    var localRev = db && db.econ && db.econ.revolution;
     db=cdb; if(!db.meta) db.meta={}; db.meta.updatedAt=cts;
+    if(!db.econ) db.econ={};
+    if(localRev && !db.econ.revolution) db.econ.revolution=localRev;
     localStorage.setItem(DB, JSON.stringify(db));
     refreshAll();
     toast('☁ 已同步到另一台设备的更新（本机旧数据已备份）');
@@ -2124,8 +2128,21 @@ function scheduleUpload(){
   syncTimer=setTimeout(function(){
     if(syncBusy){ syncDirty=true; return; }
     syncNow().catch(function(){});
-  },1800);
+  },400);
 }
+/* 页面隐藏/关闭前若还有未上传的更改，立即尝试同步（keepalive 尽量让请求发出） */
+function flushSyncBeforeHide(){
+  if(!syncCfg || !syncCfg.owner || !syncCfg.repo || !syncCfg.token) return;
+  if(!syncDirty) return;
+  if(syncBusy) return;
+  syncNow().catch(function(){});
+}
+document.addEventListener('visibilitychange', function(){
+  if(document.hidden) flushSyncBeforeHide();
+});
+window.addEventListener('beforeunload', function(){
+  flushSyncBeforeHide();
+});
 function updateSyncFab(){
   var f=$('#syncFab'); if(!f) return;
   var on = !!(syncCfg && syncCfg.owner && syncCfg.repo && syncCfg.token);
