@@ -422,6 +422,9 @@ td.ck.nt::before{content:"";position:absolute;top:2px;right:2px;width:5px;height
 .note-view .body .img-del{position:absolute;top:6px;right:6px;width:26px;height:26px;border-radius:50%;border:none;background:rgba(255,255,255,.88);color:#d76b7e;font-size:14px;cursor:pointer;display:flex;align-items:center;justify-content:center;box-shadow:0 2px 8px rgba(0,0,0,.15);opacity:0;transition:.2s}
 .note-view .body .img-del:hover{background:#fff}
 .note-view .body .li-row{margin:5px 0;padding:9px 12px}
+.np-body-wrap{position:relative}
+.np-todo-btn{position:absolute;top:10px;right:10px;width:30px;height:30px;border-radius:9px;border:1.5px solid rgba(120,180,180,.45);background:rgba(255,255,255,.78);color:#3a5760;font-size:18px;cursor:pointer;display:flex;align-items:center;justify-content:center;transition:.2s;z-index:2}
+.np-todo-btn:hover{background:#fff;border-color:#7de8c3;color:#0d6b53;box-shadow:0 4px 12px rgba(125,232,195,.3)}
 .np-img-grid{display:flex;gap:10px;flex-wrap:wrap;margin-top:8px}
 .np-img-thumb{position:relative;width:72px;height:72px;border-radius:12px;overflow:hidden;background:rgba(255,255,255,.55);border:1px solid rgba(255,255,255,.9);box-shadow:0 4px 12px rgba(120,175,195,.15)}
 .np-img-thumb img{width:100%;height:100%;object-fit:cover}
@@ -599,7 +602,10 @@ td.ck.nt::before{content:"";position:absolute;top:2px;right:2px;width:5px;height
   <div id="noteEdit" class="note-page-body">
     <input id="npTitle" maxlength="80" placeholder="标题">
     <input id="npSub" maxlength="80" placeholder="副标题">
-    <textarea id="npBody" placeholder="正文内容（可粘贴图片；用 [ ] 列待办、[x] 列已完成）"></textarea>
+    <div class="np-body-wrap">
+      <textarea id="npBody" placeholder="正文内容（可粘贴图片）"></textarea>
+      <button type="button" class="np-todo-btn" id="npTodoBtn" title="添加待办">☐</button>
+    </div>
     <div id="npImgPreview" style="display:none"></div>
   </div>
   <div id="noteView" class="note-view" style="display:none">
@@ -1538,6 +1544,11 @@ function insertAtCursor(ta,text){
   ta.selectionStart=ta.selectionEnd=pos;
   ta.focus();
 }
+$('#npTodoBtn').onclick=function(){
+  var ta=$('#npBody');
+  if(document.activeElement!==ta) ta.focus();
+  insertAtCursor(ta,'[ ] ');
+};
 $('#npBody').addEventListener('paste',function(e){
   var items=e.clipboardData && e.clipboardData.items;
   if(!items) return;
