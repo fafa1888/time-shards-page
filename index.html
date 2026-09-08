@@ -66,6 +66,7 @@ h3 .tb{
   box-shadow:0 4px 14px rgba(125,232,195,.35);transition:.2s;
 }
 h3 .tb:hover{transform:translateY(-1px);box-shadow:0 6px 18px rgba(125,232,195,.55)}
+#resvToggle{min-width:32px;justify-content:center;padding:6px 8px}
 
 /* ---------- 页面切换 ---------- */
 main section{display:none}
@@ -506,8 +507,13 @@ td.ck.nt::before{content:"";position:absolute;top:2px;right:2px;width:5px;height
         </form>
       </div>
       <div class="card glass">
-        <h3>备用资金</h3>
-        <input id="reserveInput" type="number" style="width:100%;padding:10px 14px;border-radius:13px;border:1px solid rgba(255,255,255,.9);background:rgba(255,255,255,.55);outline:none;font-size:14px">
+        <h3>备用资金 <span class="tag" id="resvTotal"></span><button class="tb" id="resvToggle" type="button">＋</button></h3>
+        <div id="resvList" class="list"></div>
+        <form id="resvForm" class="frm" autocomplete="off" style="display:none">
+          <input id="resvAmt" type="number" required style="flex:0 0 120px;min-width:100px" placeholder="金额">
+          <input id="resvNote" type="text" maxlength="60" placeholder="备注（可选）">
+          <button class="btn mint" type="submit">✓</button>
+        </form>
       </div>
     </div>
   </div>
@@ -615,7 +621,7 @@ td.ck.nt::before{content:"";position:absolute;top:2px;right:2px;width:5px;height
 var DB = 'time_shards_v1';
 var PAL = ['#7de8c3','#8fd3f4','#c3a6ff','#ffc48f','#a0e7e5','#ffb3ae','#b5e48c','#f9c6d0','#9ad0ff','#d8f5a2'];
 function fresh(){
-  return {meta:{updatedAt:0},econ:{goals:[],progress:[],reserve:null,recv:[],base:0},free:{cats:[],archivedCats:[]},time:{plans:[],checks:{},notes:[]}};
+  return {meta:{updatedAt:0},econ:{goals:[],progress:[],reserves:[],recv:[],base:0},free:{cats:[],archivedCats:[]},time:{plans:[],checks:{},notes:[]}};
 }
 var db;
 try{ var raw = JSON.parse(localStorage.getItem(DB)); db = (raw && raw.econ) ? raw : fresh(); }
@@ -623,6 +629,11 @@ catch(e){ db = fresh(); }
 if(!db.meta || typeof db.meta.updatedAt !== 'number'){ db.meta = {updatedAt: db.meta && db.meta.updatedAt || 0}; }
 if(!db.free.archivedCats) db.free.archivedCats=[];
 if(!db.time.notes) db.time.notes=[];
+if(!Array.isArray(db.econ.reserves)){
+  var oldReserve = (typeof db.econ.reserve==='number' || typeof db.econ.reserve==='string') ? +db.econ.reserve : null;
+  db.econ.reserves = (oldReserve && !isNaN(oldReserve) && oldReserve>0) ? [{id:uid(),amt:oldReserve,note:''}] : [];
+  delete db.econ.reserve;
+}
 function save(){
   db.meta = db.meta || {};
   var prev = (typeof db.meta.updatedAt==='number') ? db.meta.updatedAt : 0;
@@ -661,7 +672,14 @@ function renderEcon(){
   var total = (Number(e.base)||0) + sumProgress;
   $('#progTotal').textContent = fmt(total);
   $('#progTotal').dataset.sum = sumProgress;
-  var ri = $('#reserveInput'); if(document.activeElement !== ri) ri.value = (e.reserve==null?'':e.reserve);
+  var resvSum = e.reserves.reduce(function(s,r){ return s + (Number(r.amt)||0); },0);
+  $('#resvTotal').textContent = fmt(resvSum);
+  $('#resvList').innerHTML = e.reserves.length ? e.reserves.slice().reverse().map(function(r){
+    return '<div class="row" data-id="'+r.id+'"><b data-id="'+r.id+'">'+fmt(r.amt)+'</b>'
+      + '<span class="recv-spacer"></span>'
+      + '<i class="rn" data-id="'+r.id+'">'+(r.note?esc(r.note):'添加备注')+'</i>'
+      + '<button class="mini del" data-id="'+r.id+'">✕</button></div>';
+  }).join('') : '<p class="empty">暂无备用金</p>';
 
   $('#goalList').innerHTML = e.goals.length ? e.goals.map(function(g){
     var pct = g.amt>0 ? Math.min(100, Math.round(total/g.amt*100)) : 0;
@@ -707,7 +725,32 @@ $('#recvForm').addEventListener('submit',function(e){
   db.econ.recv.push({id:uid(),amt:+$('#rAmt').value,note:$('#rNote').value.trim(),due:$('#rDue').value,paid:false});
   save();renderEcon();this.reset();closeFold('#recvToggle','#recvForm','＋ 添加应收');toast('已添加应收');
 });
-$('#reserveInput').addEventListener('change',function(){ db.econ.reserve = this.value===''?null:+this.value; save(); toast('备用资金已更新'); });
+$('#resvForm').addEventListener('submit',function(e){
+  e.preventDefault();
+  db.econ.reserves.push({id:uid(),amt:+$('#resvAmt').value,note:$('#resvNote').value.trim()});
+  save();renderEcon();this.reset();
+  $('#resvForm').style.display='none'; $('#resvToggle').textContent='＋';
+  toast('备用金已添加');
+});
+$('#resvToggle').addEventListener('click',function(){
+  var f=$('#resvForm'), show=f.style.display==='none';
+  f.style.display = show ? '' : 'none';
+  this.textContent = show ? '－' : '＋';
+  if(show){ var i=$('#resvAmt'); if(i) setTimeout(function(){ i.focus(); },80); }
+});
+$('#resvList').addEventListener('click',function(e){
+  var t=e.target;
+  if(t && t.tagName==='B'){
+    var r=db.econ.reserves.find(function(x){return x.id===t.dataset.id;});
+    if(r){ editInlineNumber(t, r.amt, function(v){ r.amt=v; save(); renderEcon(); }); return; }
+  }
+  if(t && t.classList && t.classList.contains('rn')){
+    var r=db.econ.reserves.find(function(x){return x.id===t.dataset.id;});
+    if(r){ editInlineText2(t, r.note||'', r.note?'':'添加备注', function(v){ r.note=v; save(); renderEcon(); }); return; }
+  }
+  var b=e.target.closest('.del'); if(!b)return;
+  db.econ.reserves=db.econ.reserves.filter(function(r){return r.id!==b.dataset.id;}); save();renderEcon();
+});
 /* 点击金额/日期直接行内编辑，失焦/回车保存 */
 function editGoalAmount(el,g){
   if(document.querySelector('.gamt-edit')) return;
