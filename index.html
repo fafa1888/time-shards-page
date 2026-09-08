@@ -191,6 +191,9 @@ main section.active{display:block;animation:fadeIn .35s ease}
 .rev-card .rev-line:last-child{border-bottom:none}
 .rev-card .rev-line span{color:#5f8aa0;flex:0 0 auto}
 .rev-card .rev-line b{color:#0d6b53;font-weight:600;margin-left:auto;font-size:15.5px;font-variant-numeric:tabular-nums;letter-spacing:.4px}
+.rev-time-row{display:flex;align-items:center;gap:8px;width:100%}
+.rev-time-row input[type=time]{flex:1;min-width:0;padding:11px 10px;border-radius:14px;border:1.5px solid rgba(125,232,195,.55);background:rgba(255,255,255,.55);font-family:inherit;font-size:14px;color:#0d6b53;text-align:center;font-variant-numeric:tabular-nums}
+.rev-time-row .arr{color:#7ec8b8;font-size:16px;font-weight:700;flex:0 0 auto}
 .list .row b{color:#1f8f73;cursor:pointer;border-radius:6px;padding:1px 3px;margin:-1px -3px;transition:background .15s}
 .list .row b:hover{background:rgba(125,232,195,.14)}
 .list .row.paid{opacity:.55}
@@ -548,7 +551,11 @@ td.ck.nt::before{content:"";position:absolute;top:2px;right:2px;width:5px;height
     <form id="revForm" class="frm col" autocomplete="off">
       <input id="rvAnnual" type="number" required placeholder="年消费（元）">
       <input id="rvSalary" type="number" required placeholder="月薪（元）">
-      <input id="rvHours" type="number" step="0.5" min="0.5" required placeholder="每天工作时长（小时，如 8）">
+      <div class="rev-time-row">
+        <input id="rvStart" type="time" required value="09:00" title="上班时间">
+        <span class="arr">→</span>
+        <input id="rvEnd" type="time" required value="18:00" title="下班时间">
+      </div>
       <input id="rvDays" type="number" step="0.5" min="0.5" required placeholder="本月工作天数（可填 0.5）">
       <button class="btn mint" type="submit">✓ 开始革命</button>
     </form>
@@ -904,11 +911,17 @@ function tickRev(){
   if(!(sal>0) || !(days>0) || !(hrs>0)) return;
   var hourly=sal/days/hrs;
   var now=new Date();
-  var start=new Date(now.getFullYear(), now.getMonth(), now.getDate(), 9, 0, 0);
-  var end=new Date(start.getTime()+hrs*3600*1000);
-  var elapsedSec=Math.max(0, Math.min((now-start)/1000, hrs*3600));
+  // 解析上下班时间（HH:MM），支持跨天
+  var sStr=rev.start||'09:00', eStr=rev.end||'18:00';
+  var sh=parseInt(sStr.slice(0,2),10), sm=parseInt(sStr.slice(3,5),10);
+  var eh=parseInt(eStr.slice(0,2),10), em=parseInt(eStr.slice(3,5),10);
+  var start=new Date(now.getFullYear(), now.getMonth(), now.getDate(), sh, sm, 0, 0);
+  var end=new Date(now.getFullYear(), now.getMonth(), now.getDate(), eh, em, 0, 0);
+  if(end.getTime() <= start.getTime()) end=new Date(end.getTime()+86400000); // 跨天
+  var totalSec=(end.getTime()-start.getTime())/1000;
+  var elapsedSec=Math.max(0, Math.min((now.getTime()-start.getTime())/1000, totalSec));
   var earned=(sal/days/hrs/3600)*elapsedSec;
-  var remainMs=Math.max(0, end-now);
+  var remainMs=Math.max(0, end.getTime()-now.getTime());
   $('#rvHourly').textContent='¥'+hourly.toFixed(2);
   $('#rvEarned').textContent='¥'+earned.toFixed(3);
   $('#rvCountdown').textContent=fmtCountdown(remainMs/1000);
@@ -923,10 +936,20 @@ $('#revForm').addEventListener('submit',function(e){
   e.preventDefault();
   var ann=+$('#rvAnnual').value;
   var sal=+$('#rvSalary').value;
-  var hrs=+$('#rvHours').value;
+  var start=$('#rvStart').value;
+  var end=$('#rvEnd').value;
   var days=+$('#rvDays').value;
-  if(!(ann>0) || !(sal>0) || !(hrs>0) || !(days>0)){ toast('请填写完整且为正数'); return; }
-  db.econ.revolution={annual:ann,salary:sal,hours:hrs,days:days};
+  if(!(ann>0) || !(sal>0) || !(days>0)){ toast('请填写完整且为正数'); return; }
+  if(!start || !end){ toast('请选择上下班时间'); return; }
+  var sh=parseInt(start.slice(0,2),10), sm=parseInt(start.slice(3,5),10);
+  var eh=parseInt(end.slice(0,2),10), em=parseInt(end.slice(3,5),10);
+  var startMin=sh*60+sm, endMin=eh*60+em;
+  var hrs;
+  if(endMin>startMin) hrs=(endMin-startMin)/60;
+  else if(endMin<startMin) hrs=(24*60-startMin+endMin)/60; // 跨天
+  else { toast('上下班时间不能相同'); return; }
+  if(!(hrs>0)){ toast('工时无效'); return; }
+  db.econ.revolution={annual:ann,salary:sal,start:start,end:end,hours:hrs,days:days};
   save(); renderEcon(); renderRev(); startRevTick(); toast('自由革命开始 ✦');
 });
 $('#revToggle').addEventListener('click',function(){
@@ -934,7 +957,8 @@ $('#revToggle').addEventListener('click',function(){
   if(rev){
     $('#rvAnnual').value=rev.annual||'';
     $('#rvSalary').value=rev.salary||'';
-    $('#rvHours').value=rev.hours||'';
+    $('#rvStart').value=rev.start||'09:00';
+    $('#rvEnd').value=rev.end||'18:00';
     $('#rvDays').value=rev.days||'';
   }
   $('#revForm').style.display=''; $('#revView').style.display='none'; $('#revToggle').style.display='none';
