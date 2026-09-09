@@ -911,7 +911,7 @@ function renderRev(){
     fillRevDraft();
     return;
   }
-  $('#revForm').style.display='none'; $('#revView').style.display=''; $('#revToggle').style.display='';
+  $('#revForm').style.display='none'; $('#revView').style.display='block'; $('#revToggle').style.display='inline-flex';
   // 其他收入由用户手动维护，不在 tickRev 里覆盖（避免编辑时被每秒刷新打断）
   if(!document.querySelector('.nedit')){
     $('#rvOther').textContent='¥'+((+rev.otherIncome||0)).toFixed(2);
@@ -2268,7 +2268,8 @@ var _syncFab=$('#syncFab'); if(_syncFab) _syncFab.onclick=openSyncPanel;
 })();
 
 /* ================= 初始化 ================= */
-renderEcon(); renderFree(); renderTime();
+renderEcon(); renderRev(); startRevTick();
+renderFree(); renderTime();
 updateSyncFab();
 /* 已配置云同步 → 打开页面时后台拉一次最新数据 */
 if(syncCfg && syncCfg.owner && syncCfg.repo && syncCfg.token){
