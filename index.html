@@ -906,7 +906,11 @@ function fmtDHM(s){
 }
 function renderRev(){
   var rev=db.econ.revolution;
-  if(!rev){ $('#revForm').style.display=''; $('#revView').style.display='none'; $('#revToggle').style.display='none'; return; }
+  if(!rev){
+    $('#revForm').style.display=''; $('#revView').style.display='none'; $('#revToggle').style.display='none';
+    fillRevDraft();
+    return;
+  }
   $('#revForm').style.display='none'; $('#revView').style.display=''; $('#revToggle').style.display='';
   // 其他收入由用户手动维护，不在 tickRev 里覆盖（避免编辑时被每秒刷新打断）
   if(!document.querySelector('.nedit')){
@@ -966,6 +970,7 @@ $('#revForm').addEventListener('submit',function(e){
   else { toast('上下班时间不能相同'); return; }
   if(!(hrs>0)){ toast('工时无效'); return; }
   db.econ.revolution={annual:ann,salary:sal,start:start,end:end,hours:hrs,days:days};
+  delete db.econ._formDraft; /* 提交后清空草稿 */
   save(); renderEcon(); renderRev(); startRevTick(); toast('自由革命开始 ✦');
 });
 $('#revToggle').addEventListener('click',function(){
@@ -980,6 +985,31 @@ $('#revToggle').addEventListener('click',function(){
   $('#revForm').style.display=''; $('#revView').style.display='none'; $('#revToggle').style.display='none';
   setTimeout(function(){ $('#rvAnnual').focus(); }, 80);
 });
+
+/* 表单输入实时存草稿——不点提交也记住输入 */
+var _revDraftTimer=null;
+function saveRevDraft(){
+  if(_revDraftTimer) clearTimeout(_revDraftTimer);
+  _revDraftTimer=setTimeout(function(){
+    var a=$('#rvAnnual').value, s=$('#rvSalary').value,
+        st=$('#rvStart').value, en=$('#rvEnd').value, d=$('#rvDays').value;
+    if(!a && !s && !st && !en && !d){
+      if(db.econ._formDraft){ delete db.econ._formDraft; save(); }
+      return;
+    }
+    db.econ._formDraft={annual:a,salary:s,start:st,end:en,days:d};
+    save();
+  },350);
+}
+$('#revForm').addEventListener('input', saveRevDraft);
+function fillRevDraft(){
+  var dr=db.econ._formDraft; if(!dr) return;
+  $('#rvAnnual').value=dr.annual||'';
+  $('#rvSalary').value=dr.salary||'';
+  $('#rvStart').value=dr.start||'09:00';
+  $('#rvEnd').value=dr.end||'18:00';
+  $('#rvDays').value=dr.days||'';
+}
 
 /* 其他收入行内编辑（无需点设置） */
 $('#rvOther').addEventListener('click', function(){
