@@ -291,6 +291,20 @@ main section.active{display:block;animation:fadeIn .35s ease}
 .armeta .wbtns{margin-left:auto}
 .armeta .wbtns .mini{padding:3px 9px}
 .lcnt{flex:none;font-size:11px;color:#0d6b53;background:rgba(125,232,195,.22);padding:2px 8px;border-radius:10px;white-space:nowrap}
+/* 归档愿望详情弹窗 */
+.arch-wish-row{cursor:pointer;transition:background .15s}
+.arch-wish-row:hover{background:rgba(125,232,195,.22)}
+.arch-note-row{cursor:pointer}
+.arch-note-row:hover{background:rgba(125,232,195,.14)}
+.arch-wish-detail .awd-title{font-size:18px;font-weight:700;color:#0d6b53;margin-bottom:4px;line-height:1.5;word-break:break-all}
+.arch-wish-detail .awd-meta{font-size:12px;color:#4f7580;margin-bottom:14px;display:flex;gap:10px;flex-wrap:wrap;align-items:center}
+.arch-wish-detail .awd-items{display:flex;flex-direction:column;gap:8px;max-height:50vh;overflow-y:auto;padding-right:4px}
+.arch-wish-detail .awd-item{display:flex;align-items:center;gap:10px;padding:10px 12px;border-radius:12px;background:rgba(255,255,255,.76);border:1px solid rgba(143,211,244,.35)}
+.arch-wish-detail .awd-item.done{opacity:.7}
+.arch-wish-detail .awd-item .ck{width:20px;height:20px;border-radius:6px;display:flex;align-items:center;justify-content:center;font-size:12px;color:#fff;background:linear-gradient(135deg,#7de8c3,#8fd3f4);flex:none}
+.arch-wish-detail .awd-item .ck.empty{background:transparent;border:1.6px solid rgba(125,232,195,.5);color:transparent}
+.arch-wish-detail .awd-item .txt{flex:1;font-size:13.5px;color:#2c4a53;word-break:break-all}
+.arch-wish-detail .awd-item.done .txt{text-decoration:line-through;color:#4f7580}
 .ckbtn{width:24px;height:24px;border-radius:8px;border:1px solid rgba(125,232,195,.7);background:rgba(255,255,255,.76);color:#0d6b53;font-size:13px;flex:none;cursor:pointer;transition:.2s}
 .ckbtn.on{background:linear-gradient(135deg,#7de8c3,#8fd3f4);border:none;color:#2c4a53;box-shadow:0 0 8px rgba(125,232,195,.7)}
 /* 愿望卡片左侧大对钩（点击即归档整个愿望） */
@@ -1291,6 +1305,22 @@ function renderFree(){
       + '<div class="wishes">'+ (act.map(function(w,i){return wishHTML(c,w,i);}).join('') || '<p class="empty">这个分类还没有愿望</p>') +'</div></div>';
   }).join('') || '<p class="empty">先新建一个分类吧，比如「旅游计划」「房子畅想」</p>';
 }
+/* 查看已归档愿望的全部内容 */
+function openArchivedWishView(it){
+  var items=(it.w.items||[]);
+  var itemsHTML=items.length ? items.map(function(x){
+    return '<div class="awd-item'+(x.done?' done':'')+'">'
+      + '<span class="ck '+(x.done?'':'empty')+'">'+(x.done?'✓':'')+'</span>'
+      + '<span class="txt">'+esc(x.text||'(空步骤)')+'</span></div>';
+  }).join('') : '<p class="empty">这个愿望没有添加步骤</p>';
+  var ov=modal('<div class="arch-wish-detail">'
+    + '<div class="awd-title">'+esc(it.w.text)+'</div>'
+    + '<div class="awd-meta"><span class="tag">📂 '+esc(it.c.name)+'</span><span>实现于 '+esc(it.w.doneAt||'—')+'</span></div>'
+    + '<div class="awd-items">'+itemsHTML+'</div>'
+    + '<div class="mrow"><button class="btn ghost" id="awClose">关闭</button></div>'
+    + '</div>');
+  ov.querySelector('#awClose').onclick=function(){ ov.remove(); };
+}
 /* 右上角「归档」：所有分类的已实现愿望，只按年份聚合展示 */
 function openArchive(){
   var ov=modal('<h3>📦 归档</h3>'
@@ -1306,7 +1336,7 @@ function openArchive(){
     list.innerHTML = ys.length ? ys.map(function(y){
       return '<div class="yr"><h4>'+esc(y)+' 年 · '+byY[y].length+' 个已实现</h4>'
         + byY[y].map(function(it){
-          return '<div class="wish done"><span>✦</span><span class="wtxt">'+esc(it.w.text)+'</span>'
+          return '<div class="wish done arch-wish-row" data-cat="'+it.c.id+'" data-id="'+it.w.id+'"><span>✦</span><span class="wtxt">'+esc(it.w.text)+'</span>'
             + '<span class="armeta"><span class="asrc">📂 '+esc(it.c.name)+'</span>'
             + '<em>实现于 '+esc(it.w.doneAt||'—')+'</em>'
             + '<span class="wbtns"><button class="mini mint" data-cat="'+it.c.id+'" data-id="'+it.w.id+'" data-act="restore">还原</button>'
@@ -1316,31 +1346,40 @@ function openArchive(){
   }
   fill();
   list.addEventListener('click',function(e){
-    var b=e.target.closest('button'); if(!b)return;
-    var c=cat(b.dataset.cat); if(!c)return;
-    var w=c.wishes.find(function(x){return x.id===b.dataset.id;}); if(!w)return;
-    if(b.dataset.act==='restore'){
-      var archIdx=db.free.archivedCats.findIndex(function(x){return x.id===b.dataset.cat;});
-      if(archIdx>=0){
-        var ac=db.free.archivedCats[archIdx];
-        ac.archived=false; ac.archAt=null;
-        ac.wishes.forEach(function(x){ x.archived=false; x.doneAt=null; });
-        db.free.cats.push(ac);
-        db.free.archivedCats.splice(archIdx,1);
-      }else{
-        w.archived=false; w.doneAt=null;
+    var b=e.target.closest('button');
+    if(b){
+      var c=cat(b.dataset.cat); if(!c)return;
+      var w=c.wishes.find(function(x){return x.id===b.dataset.id;}); if(!w)return;
+      if(b.dataset.act==='restore'){
+        var archIdx=db.free.archivedCats.findIndex(function(x){return x.id===b.dataset.cat;});
+        if(archIdx>=0){
+          var ac=db.free.archivedCats[archIdx];
+          ac.archived=false; ac.archAt=null;
+          ac.wishes.forEach(function(x){ x.archived=false; x.doneAt=null; });
+          db.free.cats.push(ac);
+          db.free.archivedCats.splice(archIdx,1);
+        }else{
+          w.archived=false; w.doneAt=null;
+        }
+        save(); fill(); renderFree();
+        toast('已还原到「'+esc(c.name)+'」');
+      }else if(b.dataset.act==='del'){
+        var archIdx2=db.free.archivedCats.findIndex(function(x){return x.id===b.dataset.cat;});
+        if(archIdx2>=0){
+          db.free.archivedCats[archIdx2].wishes=db.free.archivedCats[archIdx2].wishes.filter(function(x){return x.id!==w.id;});
+        }else{
+          c.wishes=c.wishes.filter(function(x){return x.id!==w.id;});
+        }
+        save(); fill(); renderFree();
+        toast('该愿望已删除');
       }
-      save(); fill(); renderFree();
-      toast('已还原到「'+esc(c.name)+'」');
-    }else if(b.dataset.act==='del'){
-      var archIdx2=db.free.archivedCats.findIndex(function(x){return x.id===b.dataset.cat;});
-      if(archIdx2>=0){
-        db.free.archivedCats[archIdx2].wishes=db.free.archivedCats[archIdx2].wishes.filter(function(x){return x.id!==w.id;});
-      }else{
-        c.wishes=c.wishes.filter(function(x){return x.id!==w.id;});
-      }
-      save(); fill(); renderFree();
-      toast('该愿望已删除');
+      return;
+    }
+    var row=e.target.closest('.arch-wish-row');
+    if(row){
+      var c=cat(row.dataset.cat); if(!c)return;
+      var w=c.wishes.find(function(x){return x.id===row.dataset.id;});
+      if(w) openArchivedWishView({c:c,w:w});
     }
   });
   ov.querySelector('#archX').onclick=function(){ ov.remove(); };
@@ -1972,7 +2011,7 @@ $('#noteArchBtn').onclick=function(){
     + '<div class="mrow"><button class="btn ghost" id="nClose">关闭</button></div>');
   var list=ov.querySelector('#noteArchList');
   list.innerHTML = arch.length ? arch.map(function(n){
-    return '<div class="note-item" style="opacity:.7">'
+    return '<div class="note-item arch-note-row" data-id="'+n.id+'" style="opacity:.7">'
       + '<div class="note-main"><div class="note-title">'+esc(n.title)+'</div><div class="note-sub">'+esc(n.subtitle||'')+'</div></div>'
       + '<button class="note-arch-btn" data-id="'+n.id+'" title="还原">↩</button>'
       + '</div>';
