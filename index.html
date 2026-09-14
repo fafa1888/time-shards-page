@@ -1375,6 +1375,29 @@ function appendNewSubRow(w){
   bindNewSubRowEvents(row, nInp, w, newIt);
   nInp.focus();
 }
+/* 在指定 item 后插入一条空白步骤行（编辑已有项时按回车用），自动聚焦 */
+function appendNewSubRowAfter(w, afterId){
+  var newIt={id:uid(),text:'',done:false};
+  var idx=w.items.findIndex(function(x){return x.id===afterId;});
+  if(idx<0) idx=w.items.length-1;
+  w.items.splice(idx+1, 0, newIt);
+  save();
+  var wishCard=document.querySelector('.wish[data-id="'+w.id+'"]');
+  if(!wishCard) return;
+  var sub=wishCard.querySelector('.wish-sub');
+  var afterRow=sub.querySelector('.ws-row[data-id="'+afterId+'"]');
+  var row=document.createElement('div');
+  row.className='ws-row';
+  row.dataset.id=newIt.id;
+  row.innerHTML='<button type="button" class="ws-ck" data-act="subck" data-wid="'+w.id+'" data-id="'+newIt.id+'"></button>'
+    +'<input class="ws-new-in" maxlength="80" data-wid="'+w.id+'" data-id="'+newIt.id+'">'
+    +'<button type="button" class="ws-del" data-act="subdel" data-wid="'+w.id+'" data-id="'+newIt.id+'">✕</button>';
+  if(afterRow) sub.insertBefore(row, afterRow.nextSibling);
+  else sub.appendChild(row);
+  var nInp=row.querySelector('.ws-new-in');
+  bindNewSubRowEvents(row, nInp, w, newIt);
+  nInp.focus();
+}
 function bindNewSubRowEvents(row, nInp, w, newIt){
   nInp.addEventListener('keydown',function(ev){
     if(ev.key==='Enter'){
@@ -1454,18 +1477,10 @@ function editWishText(el,c,w){
     function(){ appendNewSubRow(w); });
 }
 function editSubText(el,w,it){
-  // 找出当前 item 在 wish.items 中的索引
-  var idx=w.items.findIndex(function(x){return x.id===it.id;});
-  var isLast = idx>=0 && idx===w.items.length-1;
   editInlineText(el, it.text,
-    function(v){
-      it.text=v; save(); renderFree();
-      if(isLast){
-        // 在该愿望末尾插入一条空白步骤行（"回车开启下一行"）
-        appendNewSubRow(w);
-      }
-    },
-    function(){ w.items=w.items.filter(function(x){return x.id!==it.id;}); save(); renderFree(); toast('该步骤已删除'); });
+    function(v){ it.text=v; save(); renderFree(); },
+    function(){ w.items=w.items.filter(function(x){return x.id!==it.id;}); save(); renderFree(); toast('该步骤已删除'); },
+    function(){ appendNewSubRowAfter(w, it.id); });
 }
 $('#catList').addEventListener('click',function(e){
   var t=e.target;
